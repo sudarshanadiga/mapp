@@ -20,9 +20,7 @@ def check_module_exports():
         modules = [
             ("pitext-desktop", "desktop_main"),
             ("pitext-mobile", "mobile_main"), 
-            ("pitext_codegen", "codegen_main"),
-            ("pitext_travel", "travel_main"),
-            ("calendar_integration", "calendar_main")
+            ("pitext_codegen", "codegen_main")
         ]
         
         for folder, module_name in modules:
@@ -89,20 +87,12 @@ def test_app_loading():
         mobile_app = load_app_module(BASE_DIR / "pitext-mobile", "mobile_main")
         print("✅ Mobile app loaded successfully")
         
+    
         # Test codegen app
         print("\n3. Testing codegen app...")
         codegen_app = load_app_module(BASE_DIR / "pitext_codegen", "codegen_main")
         print("✅ Codegen app loaded successfully")
-        
-        # Test travel app
-        print("\n4. Testing travel app...")
-        travel_app = load_app_module(BASE_DIR / "pitext_travel", "travel_main")
-        print("✅ Travel app loaded successfully")
-        
-        # Test calendar app
-        print("\n5. Testing calendar app...")
-        calendar_app = load_app_module(BASE_DIR / "calendar_integration", "calendar_main")
-        print("✅ Calendar app loaded successfully")
+
         
         return True
         
@@ -117,9 +107,9 @@ def test_router_creation():
     print("\nTesting router creation...")
     
     try:
-        from router_app import RouterApp, desktop_app, mobile_app, codegen_app, travel_app, calendar_app
+        from router_app import RouterApp, desktop_app, mobile_app, codegen_app
         
-        router = RouterApp(desktop_app, mobile_app, codegen_app, travel_app, calendar_app)
+        router = RouterApp(desktop_app, mobile_app, codegen_app)
         print("✅ Router created successfully")
         return router
         
@@ -143,9 +133,6 @@ def test_routing_logic():
         "/desktop/",
         "/mobile/",
         "/codegen/",
-        "/travel/",
-        "/calendar/",
-        "/socket.io/",
         "/unknown/"
     ]
     

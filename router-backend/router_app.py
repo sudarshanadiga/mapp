@@ -68,7 +68,6 @@ except Exception as mobile_error:
     mobile_app.get("/{path:path}")(create_mobile_error_handler(mobile_error))
 
 codegen_app = load_app_module(BASE_DIR / "pitext_codegen", "codegen_main")
-travel_app = load_app_module(BASE_DIR / "pitext_travel", "travel_main")
 
 # Set up sys.path for absolute imports
 base_path = BASE_DIR.resolve()
@@ -76,22 +75,6 @@ if str(base_path) not in sys.path:
     sys.path.insert(0, str(base_path))
 
 app = FastAPI(title="PiText Router")
-
-# Calendar app (ASGI)
-try:
-    from calendar_integration.main import asgi_app as calendar_asgi_app
-    app.mount("/calendar", calendar_asgi_app)
-    logger.info("✓ Calendar app mounted at /calendar (ASGI)")
-except Exception as e:
-    logger.error(f"✗ Failed to mount calendar app: {e}")
-    import traceback
-    traceback.print_exc()
-    @app.get("/calendar/{path:path}")
-    async def calendar_fallback(path: str):
-        return JSONResponse(
-            status_code=503,
-            content={"error": f"Calendar app failed to load: {str(e)}", "path": path}
-        )
 
 # ---------------------------------------------------------------------------
 # Helper: determine mobile by User-Agent header
@@ -105,12 +88,10 @@ def is_mobile(scope: Scope) -> bool:
 # Main ASGI router - Clean routing logic only
 # ---------------------------------------------------------------------------
 class RouterApp:
-    def __init__(self, desktop: ASGIApp, mobile: ASGIApp, codegen: ASGIApp, travel: ASGIApp, calendar: ASGIApp):
+    def __init__(self, desktop: ASGIApp, mobile: ASGIApp, codegen: ASGIApp):
         self.desktop = desktop
         self.mobile = mobile
         self.codegen = codegen
-        self.travel = travel
-        self.calendar = calendar
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] != "http":
@@ -136,20 +117,9 @@ class RouterApp:
                 await response(scope, receive, send)
                 return
 
-        if path.startswith("/socket.io"):
-            await self.travel(scope, receive, send)
-            return
 
         if path.startswith("/codegen"):
             await self.codegen(scope, receive, send)
-            return
-
-        if path.startswith("/travel"):
-            await self.travel(scope, receive, send)
-            return
-
-        if path.startswith("/calendar"):
-            await self.calendar(scope, receive, send)
             return
 
         if path == "/":
@@ -174,4 +144,4 @@ class RouterApp:
         await response(scope, receive, send)
 
 # Instantiate the ASGI app that Render will pick up
-app = RouterApp(desktop_app, mobile_app, codegen_app, travel_app, calendar_asgi_app)
+app = RouterApp(desktop_app, mobile_app, codegen_app)

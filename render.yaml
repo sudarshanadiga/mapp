@@ -11,10 +11,6 @@ services:
       cd pitext-desktop && pip install -r requirements.txt && cd ..
       echo "=== Installing mobile dependencies ==="
       cd pitext-mobile && pip install -r requirements.txt && cd ..
-      echo "=== Installing travel dependencies ==="
-      cd pitext_travel && pip install -r requirements.txt && cd ..
-      echo "=== Installing calendar integration dependencies ==="
-      cd calendar_integration && pip install -r requirements.txt && cd ..
       echo "=== Installing router dependencies ==="
       cd router-backend && pip install -r requirements.txt && cd ..
       echo "=== Installing playwright ==="
@@ -23,8 +19,6 @@ services:
       ls -la
       ls -la pitext-desktop/
       ls -la pitext-mobile/
-      ls -la pitext_travel/
-      ls -la calendar_integration/
       ls -la router-backend/
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:

@@ -1,6 +1,0 @@
-2025-06-29 14:44:28,399 - calendar_integration.services.calendar_client - INFO - Calendar client initialized successfully with local database
-2025-06-29 14:44:28,399 - calendar_integration.services.event_generator - WARNING - OpenAI API key not found - event generation will be disabled
-2025-06-29 14:44:30,255 - calendar_integration.services.calendar_client - INFO - Calendar client initialized successfully with local database
-2025-06-29 14:44:30,255 - calendar_integration.services.event_generator - WARNING - OpenAI API key not found - event generation will be disabled
-2025-06-29 14:55:44,112 - calendar_integration.services.calendar_client - INFO - Calendar client initialized successfully with local database
-2025-06-29 14:55:44,112 - calendar_integration.services.event_generator - WARNING - OpenAI API key not found - event generation will be disabled
