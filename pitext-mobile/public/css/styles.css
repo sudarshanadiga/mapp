@@ -1,0 +1,909 @@
+/* public/css/styles.css */
+
+/* ============================================
+   CSS Variables & Reset
+   ============================================ */
+:root {
+  --primary-color: #FFD600;
+  --bg-dark: #000000;
+  --text-light: #f0f0f0;
+  --text-white: #ffffff;
+  --border-light: rgba(255, 255, 255, 0.3);
+  --bg-translucent: rgba(255, 255, 255, 0.1);
+  --shadow-dark: rgba(0, 0, 0, 0.8);
+  --error-color: #ff6b6b;
+  --success-color: #51cf66;
+  --warning-color: #ffd93d;
+  --info-color: #339af0;
+  
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+body {
+  background: var(--bg-dark) url("/mobile/assets/PiText_background.png") center/cover no-repeat fixed;
+  color: var(--text-light);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.app-header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-white);
+  text-shadow: 0 0 10px var(--shadow-dark);
+}
+
+.app-header .highlight {
+  color: var(--primary-color);
+}
+
+.tagline {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  opacity: 0.9;
+}
+
+.examples {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.examples-label {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.example-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.example-btn:hover {
+  background: var(--bg-translucent);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+.app-main {
+  flex: 1;
+  padding: 1rem 2rem;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================================
+   Query Section
+   ============================================ */
+.query-section {
+  margin-bottom: 2rem;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#query {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background: var(--bg-translucent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-white);
+  transition: all var(--transition-fast);
+}
+
+#query:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#query::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.primary-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  background: var(--primary-color);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.primary-btn:hover {
+  background: #ffc400;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 214, 0, 0.3);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+/* ============================================
+   Result Section
+   ============================================ */
+.result-section {
+  margin-bottom: 2rem;
+}
+
+.diagram-container {
+  background: var(--bg-translucent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  min-height: 400px;
+  position: relative;
+  overflow: auto;
+}
+
+/* only sequence diagrams get extra width */
+.diagram-container.sequence-wide {
+  max-width: none;        /* lift the normal cap */
+  width: 1100px;          /* choose your "wide" value */
+  margin: 0 auto;
+}
+
+/* if you need the inner SVG to fill that new width */
+.diagram-container.sequence-wide svg {
+  width: 100% !important;
+  height: auto !important;
+}
+
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  opacity: 0.5;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   Diagram Styles
+   ============================================ */
+.diagram-container .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.diagram-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mermaid customizations */
+.mermaid text {
+  fill: var(--text-white) !important;
+  text-shadow: 1px 1px 2px var(--shadow-dark);
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  fill: var(--bg-translucent) !important;
+  stroke: var(--text-white) !important;
+  stroke-width: 2px;
+}
+
+.mermaid .node.element-selected rect,
+.mermaid .node.element-selected circle {
+  stroke: var(--primary-color) !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 6px var(--primary-color));
+}
+
+.mermaid .edgePath path {
+  stroke: var(--text-white) !important;
+  stroke-width: 2px !important;
+}
+
+/* ============================================
+   Diagram Utilities
+   ============================================ */
+.diagram-utils {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: flex-end;
+}
+
+.diagram-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
+  color: var(--text-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.diagram-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--text-white);
+}
+
+
+
+
+/* ============================================
+   Selection Section
+   ============================================ */
+.selection-section {
+  margin-bottom: 2rem;
+}
+
+.selection-indicator {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.selection-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-left: 2rem; /* ADD THIS LINE to push the "Selected:" text to the right */
+}
+
+.selected-text {
+  color: var(--primary-color);
+}
+
+.deep-dive-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#deepDiveQuery {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--bg-translucent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-white);
+  font-size: 0.875rem;
+}
+
+
+#deepDiveQuery:focus, #deepDiveQuery.highlight-focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(255, 214, 0, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.secondary-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-light);
+  color: var(--text-white);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: var(--text-white);
+}
+
+/* ============================================
+   Deep Dive Response
+   ============================================ */
+.deep-dive-response {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  color: var(--text-white);
+  line-height: 1.8;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all var(--transition-normal);
+  position: relative; /* ADD THIS LINE */
+}
+
+
+/* --- ADD THIS ENTIRE NEW BLOCK OF CSS --- */
+/* This styles the new close button */
+.deep-dive-response .close-btn {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
+  color: var(--text-light);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  line-height: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  z-index: 10;
+}
+
+.deep-dive-response .close-btn:hover {
+  background: var(--error-color);
+  color: var(--text-white);
+  border-color: var(--error-color);
+  transform: scale(1.1);
+}
+
+.deep-dive-response.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.deep-dive-content h3 {
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.deep-dive-qa {
+  margin-bottom: 1.5rem;
+}
+
+.question {
+  font-style: italic;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.answer {
+  white-space: pre-wrap;
+}
+
+.answer p {
+  margin-bottom: 1rem;
+}
+
+.answer p:last-child {
+  margin-bottom: 0;
+}
+
+.answer code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.answer mark {
+  background: rgba(255, 214, 0, 0.3);
+  color: var(--text-white);
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+}
+
+.deep-dive-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  font-size: 1.125rem;
+  color: var(--text-white);
+}
+
+.loading-tip {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+}
+
+.loading-overlay-show {
+  opacity: 1;
+  visibility: visible;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Error States
+   ============================================ */
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+.error-text {
+  font-size: 1.125rem;
+  color: var(--error-color);
+  max-width: 500px;
+}
+
+.retry-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--error-color);
+  color: var(--error-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.retry-btn:hover {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: var(--text-white);
+  color: var(--text-white);
+}
+
+/* ============================================
+   Notifications
+   ============================================ */
+.notification-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.notification {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 300px;
+  transform: translateX(400px);
+  transition: transform var(--transition-normal);
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.notification-show {
+  transform: translateX(0);
+}
+
+.notification-icon {
+  font-size: 1.25rem;
+}
+
+.notification-success {
+  border-color: var(--success-color);
+}
+
+.notification-success .notification-icon {
+  color: var(--success-color);
+}
+
+.notification-error {
+  border-color: var(--error-color);
+}
+
+.notification-error .notification-icon {
+  color: var(--error-color);
+}
+
+.notification-warning {
+  border-color: var(--warning-color);
+}
+
+.notification-warning .notification-icon {
+  color: var(--warning-color);
+}
+
+.notification-info {
+  border-color: var(--info-color);
+}
+
+.notification-info .notification-icon {
+  color: var(--info-color);
+}
+
+.notification-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.notification-close:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.app-footer {
+  padding: 1rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.keyboard-shortcuts {
+  font-size: 0.875rem;
+}
+
+kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 0.2rem 0.4rem;
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+/* ============================================
+   Dialogs
+   ============================================ */
+.shortcuts-dialog {
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-white);
+  padding: 2rem;
+  max-width: 500px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.shortcuts-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.shortcuts-dialog h2 {
+  margin-bottom: 1.5rem;
+  color: var(--primary-color);
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-dialog {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--primary-color);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.close-dialog:hover {
+  background: #ffc400;
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+  
+  .app-main {
+    padding: 1rem;
+  }
+  
+  .input-wrapper {
+    flex-direction: column;
+  }
+  
+  #query {
+    width: 100%;
+  }
+  
+  .primary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .diagram-container {
+    padding: 1rem;
+    min-height: 300px;
+  }
+  
+  .notification-container {
+    left: 1rem;
+    right: 1rem;
+  }
+  
+  .notification {
+    min-width: auto;
+    transform: translateY(-100px);
+  }
+  
+  .notification-show {
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   Mobile Optimizations
+   ============================================ */
+@media (max-width: 768px) {
+  /* Better touch targets for mobile */
+  .primary-btn,
+  .secondary-btn,
+  .example-btn {
+    min-height: 44px; /* iOS recommended touch target size */
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Mobile-friendly spacing */
+  .app-header {
+    padding: 1.5rem 1rem 1rem;
+  }
+  
+  .app-main {
+    padding: 1rem;
+  }
+  
+  /* Mobile-optimized input */
+  #query {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.875rem 1rem;
+  }
+  
+  /* Mobile-friendly diagram container */
+  .diagram-container {
+    padding: 1rem;
+    min-height: 300px;
+    overflow-x: auto;
+  }
+  
+  /* Mobile notification positioning */
+  .notification-container {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    top: auto;
+  }
+  
+  .notification {
+    min-width: auto;
+    max-width: none;
+  }
+}
+
+/* ============================================
+   Touch Device Optimizations
+   ============================================ */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets for touch devices */
+  .example-btn {
+    padding: 0.5rem 1rem;
+    min-height: 44px;
+  }
+  
+  /* Disable hover effects on touch devices */
+  .primary-btn:hover,
+  .secondary-btn:hover,
+  .example-btn:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .app-header,
+  .app-footer,
+  .query-section,
+  .selection-section,
+  .diagram-utils,
+  .notification-container {
+    display: none;
+  }
+  
+  .diagram-container {
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  
+  .mermaid text {
+    fill: black !important;
+    text-shadow: none;
+  }
+}

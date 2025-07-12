@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>PiText CodeGen</title>
+  <link rel="icon" href="/codegen/PiText_favicon.ico" type="image/x-icon"/>
+  <link rel="apple-touch-icon" href="/codegen/PiText_favicon.ico">
+
+  <link rel="stylesheet" href="/codegen/css/styles.css">
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: false });
+    window.mermaid = mermaid;
+  </script>
+</head>
+<body>
+  <h1>PiText <span style="color:#FFD600;">CodeGen!</span></h1>
+  <p class="banner-sub">Get Code. But first, the <b>codeflow.</b></p>
+  <p class="banner-example">Try:<br><span class="eg">"Build a Flask API for a todo app"</span><br><span class="eg">"Create a React component for user profiles"</span></p>
+
+  <div class="input-area">
+    <textarea id="prompt" placeholder="Describe the code you want to generate..." rows="4"></textarea>
+    <div class="input-options">
+      <select id="language">
+        <option value="python">Python</option>
+        <option value="typescript">TypeScript</option>
+        <option value="javascript">JavaScript</option>
+        <option value="go">Go</option>
+        <option value="rust">Rust</option>
+      </select>
+      <button id="generateBtn">Create Diagram</button>
+    </div>
+  </div>
+
+  <div id="diagram-section" class="diagram-section" style="display: none;">
+    <h3>Proposed Code Flow</h3>
+    
+    <div class="diagram-layout">
+      <div class="diagram-main">
+        <div id="diagram-container" class="diagram-container">
+          </div>
+      </div>
+      
+      <div class="diagram-sidebar">
+        <div id="selectionIndicator" class="selection-indicator">
+          <div class="selection-display">
+            <strong>Selected:</strong> <span id="selectedText"></span>
+          </div>
+          <div class="deep-dive-input">
+            <input id="deepDiveQuery" placeholder="Ask about this node..." />
+            <button id="askBtn">Ask</button>
+          </div>
+        </div>
+
+        <div id="deepDiveResponse" class="deep-dive-response"></div>
+      </div>
+    </div>
+    
+    <div class="approval-section">
+      <div class="action-buttons">
+        <button id="approveBtn" class="approve-btn">
+          ✅ Generate Code File
+        </button>
+        <button id="rejectBtn" class="reject-btn">
+          🔄 Start Over
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="results-container">
+    <div class="placeholder">Your code will appear here.</div>
+  </div>
+
+  <script type="module" src="/codegen/js/app.js"></script>
+</body>
+</html>

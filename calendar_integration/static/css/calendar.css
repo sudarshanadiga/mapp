@@ -1,0 +1,899 @@
+/* ===============================================
+   PiText Calendar - Refactored CSS
+   Structure:
+   1. CSS Variables & Base Reset
+   2. Layout & Container Styles
+   3. Calendar Component Styles
+   4. Event Styles
+   5. Modal & Dialog Styles
+   6. Form & Input Styles
+   7. Button Styles
+   8. Utility Classes & Animations
+   9. Responsive Overrides
+   =============================================== */
+
+/* ===============================================
+   1. CSS VARIABLES & BASE RESET
+   =============================================== */
+   :root {
+    /* Colors */
+    --primary-color: #667eea;
+    --primary-hover: #5a67d8;
+    --primary-light: #e8edf9;
+    --accent-yellow: #facf0f;
+    --accent-yellow-hover: #e6bb0e;
+    --danger-color: #dc3545;
+    --danger-hover: #c82333;
+    --success-color: #38a169;
+    --gray-light: #f8f9fa;
+    --gray-border: #e9ecef;
+    --gray-text: #6c757d;
+    --gray-dark: #495057;
+    --white: #ffffff;
+    --black: #000000;
+    
+    /* Event Colors */
+    --event-fun: #e91e63;
+    --event-work: #2196f3;
+    --event-other-bg: #e8f5e9;
+    --event-other-border: #4caf50;
+    --event-other-text: #2e7d32;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 20px;
+    --spacing-xl: 24px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.2);
+    
+    /* Transitions */
+    --transition-fast: all 0.2s ease;
+    --transition-normal: all 0.3s ease;
+    
+    /* FullCalendar */
+    --fc-border-color: #ddd;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  /* ===============================================
+     2. LAYOUT & CONTAINER STYLES
+     =============================================== */
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #764ba2 100%);
+    min-height: 100vh;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2px 20px 3px 20px;
+    background: var(--white);
+    min-height: 40vh;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  }
+  
+  /* Header styles */
+  header.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    margin-bottom: 10px;
+    padding: 16px 0 8px 0;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  
+  header.calendar-header h1 {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  header p {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+  }
+  
+  /* Calendar controls */
+  .calendar-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  #import-google-calendar {
+    padding: 10px 20px;
+    margin-top: 24px;
+    margin-left: auto;
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition-normal);
+  }
+  
+  #import-google-calendar:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+  }
+  
+  #import-google-calendar:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  /* Calendar container */
+  #calendar {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  
+  /* --- Sleep Toggle Bar Styles --- */
+
+/* Remove default height from all-day slot since we'll position our bar differently */
+.fc-theme-standard .fc-timegrid-all-day-slot {
+  display: none; /* Hide the all-day slot as we'll create our own bar */
+}
+
+/* Common style for both toggle bars */
+.sleep-toggle-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  background-color: #f7f7f7;
+  border: 1px solid #ddd;
+  transition: background-color 0.2s ease;
+  user-select: none;
+  justify-content: flex-start;
+  padding-left: 20px;
+  width: 100%;
+}
+
+/* Early toggle - positioned at top */
+.early-sleep-toggle-bar {
+  position: relative;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Late toggle - positioned at bottom */
+.late-sleep-toggle-bar {
+  position: relative;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+}
+
+.sleep-toggle-bar:hover {
+  background-color: #e9ecef;
+  color: #000;
+}
+
+/* Dark theme support */
+.calendar-dark-theme .sleep-toggle-bar,
+body.dark-theme .sleep-toggle-bar {
+  background: #2a2a2a;
+  color: #ccc;
+  border-color: #555;
+}
+
+.calendar-dark-theme .sleep-toggle-bar:hover,
+body.dark-theme .sleep-toggle-bar:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Remove padding adjustments since bars are not sticky */
+.fc-scroller-liquid-absolute {
+  position: relative;
+}
+
+/* Ensure the time grid starts after the top bar */
+.fc-timegrid-slots {
+  position: relative;
+}
+  
+  /* ===============================================
+     3. FULLCALENDAR COMPONENT STYLES
+     =============================================== */
+  .fc {
+    font-family: inherit;
+  }
+  
+  .fc-toolbar {
+    background: var(--gray-light);
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--gray-border);
+  }
+  
+  .fc-toolbar-title {
+    font-size: 1.5rem !important;
+    font-weight: 600;
+    color: var(--gray-dark);
+  }
+  
+  /* Calendar buttons */
+  .fc-button {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--white) !important;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-normal);
+  }
+  
+  .fc-button:hover {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+    transform: translateY(-1px);
+  }
+  
+  .fc-button:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+  }
+  
+  .fc-button-active {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+  }
+  
+  /* Restore FullCalendar's default grid lines */
+  .fc-theme-standard td,
+  .fc-theme-standard th,
+  .fc-theme-standard .fc-timegrid-slot,
+  .fc-theme-standard .fc-timegrid-col,
+  .fc-theme-standard .fc-col-header-cell-cushion {
+    border: 1px solid var(--fc-border-color);
+  }
+  
+  /* Early hours toggle */
+  .early-toggle {
+    display: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 12px;
+    color: #555;
+    text-align: center;
+    background: #fafafa;
+    border: 1px solid #d0d0d0;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    width: max-content;
+    margin: 0 auto -1px;
+    user-select: none;
+  }
+  
+  /* Event Type Filter Box */
+  #calendar-filters {
+    display: flex !important;
+    gap: 15px !important;
+    margin-left: 8px !important;
+    align-items: center !important;
+    border: 2px solid var(--primary-color) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 8px 12px !important;
+    background: rgba(102, 126, 234, 0.05) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  
+  #calendar-filters::before {
+    content: "Event Type:";
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-right: 8px;
+    font-size: 14px;
+  }
+  
+  #calendar-filters label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    color: var(--accent-yellow) !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  
+  #calendar-filters label:hover {
+    color: var(--accent-yellow-hover) !important;
+  }
+  
+  #calendar-filters input[type="checkbox"] {
+    margin: 0 !important;
+    cursor: pointer;
+    transform: scale(1.1);
+    accent-color: var(--accent-yellow);
+  }
+  
+  #month-summary-bar {
+    color: var(--accent-yellow) !important;
+  }
+  
+  /* ===============================================
+     4. EVENT STYLES
+     =============================================== */
+  .fc-event {
+    border-radius: var(--radius-sm);
+    border: none !important; /* Only remove borders from event elements, not grid */
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-normal);
+    cursor: pointer;
+    animation: none !important;
+  }
+  
+  .fc-event:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .event-content {
+    padding: 4px 8px;
+  }
+  
+  .event-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  
+  .event-location {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+  
+  /* Highlight animation for events */
+  .highlight-event,
+  .fc-event.highlight-event {
+    animation: pulse 1s ease-in-out 3 !important;
+    animation-fill-mode: forwards;
+  }
+  
+  /* ===============================================
+     5. MODAL & DIALOG STYLES
+     =============================================== */
+  .calendar-modal {
+    display: none;
+  }
+  
+  .calendar-modal[open] {
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    min-height: 300px;
+    max-height: 85vh;
+    width: 100%;
+    max-width: 500px;
+    margin: auto;
+    position: fixed;
+    margin-top: 10vh;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 0;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    background: var(--white);
+  }
+  
+  .calendar-modal::backdrop {
+    background: rgba(0,0,0,0.5);
+  }
+  
+  /* Close button */
+  .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: var(--gray-text);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+  }
+  
+  .close-btn:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--black);
+  }
+  
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--gray-border);
+    margin: 0;
+    padding: 0;
+    height: 50px;
+    background: #fafbfc;
+  }
+  
+  .tab-btn {
+    flex: 1;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--gray-text);
+    height: 100%;
+    transition: var(--transition-fast);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .tab-btn:hover {
+    color: var(--gray-dark);
+  }
+  
+  .tab-btn.active {
+    background: var(--white);
+    color: var(--gray-dark);
+    font-weight: 600;
+  }
+  
+  .tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: var(--accent-yellow);
+  }
+  
+  /* Tab panes */
+  .tab-pane {
+    display: none;
+    height: auto;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  .tab-pane.active {
+    display: block;
+  }
+  
+  #tab-echo {
+    display: none;
+  }
+  
+  #tab-echo.active {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 200px;
+    max-height: 60vh;
+    padding: 0;
+  }
+  
+  /* Modal body section heights */
+  .modal-body > section {
+    min-height: 520px;
+  }
+  
+  /* Echo flowchart */
+  #echo-flowchart {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow: auto;
+  }
+  
+  #echo-flowchart:empty::before {
+    content: '';
+  }
+  
+  #tab-echo.active #echo-flowchart:empty::before {
+    color: var(--gray-text);
+    font-style: italic;
+  }
+  
+  /* Echo indicator dot */
+  .echo-dot {
+    display: none;
+    width: 8px;
+    height: 8px;
+    background-color: #28a745;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  
+  .echo-dot.active {
+    display: inline-block;
+  }
+  
+  /* Mermaid diagram styles */
+  #echo-flowchart .mermaid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    width: 100%;
+  }
+  
+  #echo-flowchart svg {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+  
+  .mermaid .nodeLabel {
+    color: #333 !important;
+  }
+  
+  .mermaid .edgePath .path {
+    stroke: #333 !important;
+  }
+  
+  .mermaid .cluster > rect {
+    fill: var(--primary-light) !important;
+    stroke: #4a6fa5 !important;
+  }
+  
+  /* Modal footer */
+  .modal-footer {
+    padding: 15px 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+    background: var(--white);
+    margin-top: 10px;
+  }
+  
+  /* Footer button visibility per active tab */
+  #tab-details.active ~ .modal-footer #echo-reset-btn { 
+    display: none !important; 
+  }
+  
+  #tab-details.active ~ .modal-footer #echo-event-btn,
+  #tab-details.active ~ .modal-footer .delete,
+  #tab-details.active ~ .modal-footer [type="submit"] { 
+    display: inline-block !important; 
+  }
+  
+  #tab-echo.active ~ .modal-footer #echo-reset-btn { 
+    display: inline-block !important; 
+  }
+  
+  #tab-echo.active ~ .modal-footer #echo-event-btn,
+  #tab-echo.active ~ .modal-footer .delete,
+  #tab-echo.active ~ .modal-footer [type="submit"] { 
+    display: none !important; 
+  }
+  
+  /* ===============================================
+     6. FORM & INPUT STYLES
+     =============================================== */
+  #tab-details form {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    gap: 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 0;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--gray-dark);
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.15s ease;
+  }
+  
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 120px;
+  }
+  
+  /* ===============================================
+     7. BUTTON STYLES
+     =============================================== */
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+  
+  .btn-primary {
+    background: var(--primary-color);
+    color: var(--white);
+  }
+  
+  .btn-primary:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+  
+  .btn-danger {
+    background: var(--danger-color);
+    color: var(--white);
+  }
+  
+  .btn-danger:hover {
+    background: var(--danger-hover);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+  }
+  
+  .btn-echo {
+    background: var(--accent-yellow);
+    color: #222;
+  }
+  
+  .btn-echo:hover {
+    background: var(--accent-yellow-hover);
+    box-shadow: 0 2px 8px rgba(250, 207, 15, 0.3);
+  }
+  
+  .btn-echo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .btn-secondary {
+    background: var(--gray-text);
+    color: var(--white);
+  }
+  
+  .btn-secondary:hover {
+    background: #5a6268;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+  }
+  
+  /* ===============================================
+     8. UTILITY CLASSES & ANIMATIONS
+     =============================================== */
+  /* Success notification */
+  .success-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success-color);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  }
+  
+  /* Error notification */
+  .calendar-error-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ff6b6b;
+    color: var(--white);
+    padding: 15px 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 10000;
+    max-width: 300px;
+    animation: slideIn 0.3s ease;
+  }
+  
+  .error-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .error-close {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+  }
+  
+  .error-close:hover {
+    background: rgba(255,255,255,0.2);
+  }
+  
+  /* Loading state */
+  .loading {
+    position: relative;
+  }
+  
+  .loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px 10px rgba(102, 126, 234, 0.3);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+  
+  /* ===============================================
+     9. RESPONSIVE OVERRIDES
+     =============================================== */
+  @media (max-width: 768px) {
+    .container {
+      padding: 10px;
+    }
+    
+    header h1 {
+      font-size: 2rem;
+    }
+    
+    .fc-toolbar {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .fc-toolbar-chunk {
+      display: flex;
+      justify-content: center;
+    }
+    
+    .calendar-modal {
+      width: 98vw;
+      height: fit-content;
+      min-height: 250px;
+      max-height: 85vh;
+      margin: 10px;
+    }
+    
+    .tab-pane {
+      height: auto;
+      max-height: 60vh;
+      padding: 15px;
+    }
+    
+    .btn {
+      flex: 1;
+      min-width: 100px;
+    }
+    
+    #echo-flowchart {
+      min-height: 150px;
+      max-height: 40vh;
+    }
+    
+    #calendar-filters {
+      margin-left: 8px !important;
+      padding: 6px 10px !important;
+      gap: 12px !important;
+    }
+    
+    #calendar-filters::before {
+      font-size: 13px;
+      margin-right: 6px;
+    }
+    
+    #calendar-filters label {
+      font-size: 13px !important;
+    }
+  }

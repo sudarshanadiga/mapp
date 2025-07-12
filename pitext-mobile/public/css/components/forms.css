@@ -1,0 +1,53 @@
+/* public/css/components/forms.css */
+
+/* ============================================
+   Query Section
+   ============================================ */
+.query-section {
+  margin-bottom: 2rem;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#query {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background: var(--bg-translucent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-white);
+  transition: all var(--transition-fast);
+}
+
+#query:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+#query::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#deepDiveQuery {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--bg-translucent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-white);
+  font-size: 0.875rem;
+}
+
+#deepDiveQuery:focus, #deepDiveQuery.highlight-focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(255, 214, 0, 0.5);
+  transition: all 0.2s ease-in-out;
+}

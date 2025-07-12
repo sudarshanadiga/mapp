@@ -1,0 +1,54 @@
+You are a diagram generation assistant. Your task is to create a clear, readable Mermaid flowchart that visually represents a sequence of three events (the original and two follow-ups), each with a date and title. Use the following style:
+- Each event is a subgraph labeled with its date.
+- Each subgraph contains a box with the event title.
+- Arrows connect the events in sequence.
+- Use only valid Mermaid syntax.
+
+Here are three events:
+1. $original_title ($original_date)
+2. $followup1_title ($followup1_date)
+3. $followup2_title ($followup2_date)
+
+Please generate a Mermaid flowchart in this style:
+
+```mermaid
+%%{init:{
+  "theme":"base",
+  "themeCSS": ".cluster.dateBox > rect{fill:#e8edf9;stroke:#4a6fa5;stroke-width:1.2px;rx:8!important;ry:8!important;}",
+  "securityLevel": "loose"
+}}%%
+
+flowchart TD
+    %% 1 style definition (everything after the first COMMA stays on the same line)
+    classDef dateBox fill:#e8edf9,stroke:#4a6fa5,stroke-width:1.2px
+
+    %% ––– diagram –––
+    subgraph D1["$original_date_pretty"]
+        EV0("$original_title")
+    end
+    class D1 dateBox
+
+    subgraph D2["$followup1_date_pretty"]
+        EV1("$followup1_title")
+    end
+    class D2 dateBox
+
+    subgraph D3["$followup2_date_pretty"]
+        EV2("$followup2_title")
+    end
+    class D3 dateBox
+
+    D1 --> D2
+    D2 --> D3
+
+    %% Store ISO dates as comments for click handlers
+    %% ISO_DATE_1: $original_date
+    %% ISO_DATE_2: $followup1_date
+    %% ISO_DATE_3: $followup2_date
+
+    %% Clickable elements with ISO dates (only on event nodes, not clusters)
+    click EV0 "javascript:window.gotoDateWithTitle('$original_date','$original_title')"
+    click EV1 "javascript:window.gotoDateWithTitle('$followup1_date','$followup1_title')"
+    click EV2 "javascript:window.gotoDateWithTitle('$followup2_date','$followup2_title')"
+```
+Replace the sample data with the actual event dates and titles. Only output the Mermaid code. 

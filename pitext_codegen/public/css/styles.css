@@ -1,0 +1,19 @@
+/* public/styles.css */
+/* Main entry point - imports all other CSS files in correct order */
+
+/* Base styles */
+@import url('./base/reset.css');
+@import url('./base/typography.css');
+
+/* Layout styles */
+@import url('./layout/main.css');
+
+/* Component styles */
+@import url('./components/forms.css');
+@import url('./components/buttons.css');
+@import url('./components/diagram.css');
+@import url('./components/selection.css');
+@import url('./components/results.css');
+
+/* Responsive styles */
+@import url('./responsive/mobile.css');

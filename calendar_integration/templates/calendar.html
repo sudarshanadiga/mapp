@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PiText - Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="user-id" content="{{ request.args.get('user_id', 'default_user') }}" />
+  <link rel="icon" type="image/x-icon" href="{{ url_for('calendar_api.events.favicon') }}" />
+
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="{{ url_for('calendar_api.static', filename='css/calendar.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('calendar_api.static', filename='css/calendar-dark-theme.css') }}" />
+</head>
+<body>
+  <div class="lightbulb-bg"></div>
+  <div class="container">
+    <header class="calendar-header">
+      <h1>📅 Calendar</h1>
+      <button id="import-google-calendar">
+        <span id="google-calendar-status"></span>
+        <span id="google-calendar-btn-text">Import Google Calendar</span>
+      </button>
+    </header>
+
+    <main>
+      <!-- Calendar Container -->
+      <div id="calendar"></div>
+    </main>
+  </div>
+
+  <!-- Event Modal -->
+  <dialog id="event-modal" class="calendar-modal">
+    <button type="button" class="close-btn" aria-label="Close" onclick="this.closest('dialog').close()">&times;</button>
+    
+    <!-- Tab bar -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="details">Details</button>
+      <button class="tab-btn" data-tab="echo">Echo <span id="echo-indicator" class="echo-dot"></span></button>
+    </nav>
+
+    <!-- Details tab -->
+    <section id="tab-details" class="tab-pane active">
+      <form id="event-form">
+        <input type="hidden" name="event_id">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" name="title" required />
+        </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea name="description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input type="text" name="location" />
+        </div>
+        <div class="form-group">
+          <label for="start_time">Start Time</label>
+          <input type="datetime-local" name="start_time" required />
+        </div>
+        <div class="form-group">
+          <label for="duration_minutes">Duration (minutes)</label>
+          <input type="number" name="duration_minutes" value="60" min="15" step="15" />
+        </div>
+      </form>
+    </section>
+
+    <!-- Echo tab -->
+    <section id="tab-echo" class="tab-pane">
+      <div id="echo-flowchart"></div>
+    </section>
+
+    <!-- Modal Footer with all action buttons -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="echo-reset-btn">Reset</button>
+      <button type="button" class="btn btn-echo" id="echo-event-btn">Echo this!</button>
+      <button type="button" class="btn btn-danger delete">Delete</button>
+      <button type="submit" class="btn btn-primary" form="event-form">Save</button>
+    </div>
+  </dialog>
+
+  <!-- FullCalendar Library -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <!-- Mermaid Library -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+
+  <!-- Initialize Mermaid -->
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'base',
+          securityLevel: 'loose',
+          flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true
+          }
+        });
+        console.log('Mermaid initialized successfully');
+      } else {
+        console.error('Mermaid library failed to load');
+      }
+    });
+  </script>
+
+  <!-- Initialize CSRF token -->
+  <script>
+    fetch('/calendar/csrf-token')
+      .then(response => response.json())
+      .then(data => {
+        if (data.data && data.data.csrf_token) {
+          document.cookie = `csrftoken=${data.data.csrf_token}; path=/; SameSite=Lax`;
+        }
+      })
+      .catch(error => console.error('Failed to get CSRF token:', error));
+  </script>
+
+  <!-- Calendar Integration -->
+  <script type="module" src="{{ url_for('calendar_api.static', filename='js/core.js') }}"></script>
+  <script src="{{ url_for('calendar_api.static', filename='js/mermaid.js') }}"></script>
+
+  <!-- Import functionality -->
+  <script>
+    document.getElementById('import-google-calendar').onclick = function() {
+      const userId = localStorage.getItem('pitext_user_id') || document.querySelector('meta[name="user-id"]').content;
+      
+      if (!userId) {
+          alert('Please refresh the page to initialize user session');
+          return;
+      }
+      
+      fetch('/calendar/set-session-user', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ user_id: userId })
+      }).then(response => {
+          if (response.ok) {
+              window.location.href = '/calendar/oauth/google/start';
+          } else {
+              alert('Failed to initialize session. Please try again.');
+          }
+      }).catch(error => {
+          console.error('Error setting session:', error);
+          alert('Failed to initialize session. Please try again.');
+      });
+    };
+
+    // Handle OAuth success
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    
+    window.addEventListener('DOMContentLoaded', function() {
+      if (getQueryParam('google_import') === 'success') {
+        const btn = document.getElementById('import-google-calendar');
+        const status = document.getElementById('google-calendar-status');
+        const text = document.getElementById('google-calendar-btn-text');
+        
+        status.textContent = '✓';
+        status.style.color = 'green';
+        status.style.fontWeight = 'bold';
+        status.style.marginRight = '4px';
+        text.textContent = 'Google Calendar Connected';
+        btn.disabled = true;
+        
+        // Show notification
+        const notif = document.createElement('div');
+        notif.className = 'success-notification';
+        notif.textContent = 'Google Calendar imported successfully!';
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 3500);
+      }
+    });
+  </script>
+</body>
+</html> 

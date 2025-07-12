@@ -1,0 +1,63 @@
+/* css/components/buttons.css */
+#generateBtn {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(45deg, #FFD600, #FFA000);
+  color: #000;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#generateBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 214, 0, 0.4);
+}
+
+#generateBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.approve-btn {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(45deg, #4CAF50, #45a049);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.approve-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.approve-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reject-btn, .restart-btn {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 2px solid #FFD600;
+  background: transparent;
+  color: #FFD600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reject-btn:hover, .restart-btn:hover {
+  background: rgba(255, 214, 0, 0.1);
+  transform: translateY(-2px);
+}

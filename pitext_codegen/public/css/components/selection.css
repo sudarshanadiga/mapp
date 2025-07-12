@@ -1,0 +1,72 @@
+/* css/components/selection.css */
+.selection-indicator {
+  display: none;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0,0,0,.8);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.selection-indicator.active {
+  display: block;
+}
+
+.selection-display {
+  margin-bottom: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid rgba(255,255,255,.3);
+}
+
+.deep-dive-input {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+}
+
+.deep-dive-input input {
+  flex: 1;
+  padding: .5rem;
+  font-size: 14px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff;
+  border-radius: 4px;
+}
+
+.deep-dive-input input::placeholder {
+  color: rgba(255,255,255,.6);
+}
+
+.deep-dive-input button {
+  padding: .5rem 1rem;
+  font-size: 14px;
+  background: rgba(255,255,255,.2);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 4px;
+  transition: background .2s;
+  cursor: pointer;
+}
+
+.deep-dive-input button:hover {
+  background: rgba(255,255,255,.3);
+}
+
+.deep-dive-response {
+  display: none;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: rgba(0,0,0,.7);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.deep-dive-response.active {
+  display: block;
+}

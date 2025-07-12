@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-status-bar-style" content="black-translucent">
+  <title>PiText</title>
+  
+  <link rel="icon" href="/desktop/assets/PiText_favicon.ico" type="image/x-icon"/>
+  <link rel="apple-touch-icon" href="/desktop/assets/PiText_favicon.ico">
+  
+  <link rel="stylesheet" href="/desktop/css/styles.css">
+  
+  <link rel="preload" href="/desktop/assets/PiText_background.png" as="image">
+  
+  <script type="module">
+    // Import Mermaid but don't initialize - our app will handle it
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    window.mermaid = mermaid;
+  </script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Answers, you can <span class="highlight">See!</span></h1>
+    <p class="tagline">Ask anything. Get responses in <strong>Textcharts.</strong></p>
+    <div class="examples">
+      <p class="examples-label">Try:</p>
+      <button class="example-btn" data-query="How do rainbows form">"How do rainbows form"</button>
+      <button class="example-btn" data-query="Pepsi vs Coke">"Pepsi vs Coke"</button>
+      <button class="example-btn" data-query="Steps to bake a cake">"Steps to bake a cake"</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="query-section">
+      <div class="input-wrapper">
+        <input 
+          id="query" 
+          type="text"
+          placeholder="Ask anything!" 
+          autocomplete="off"
+          aria-label="Enter your question"
+        />
+        <button id="generateBtn" class="primary-btn" aria-label="Answer">
+          <span class="btn-text">Answer</span>
+        </button>
+      </div>
+      <div id="querySuggestions" class="suggestions"></div>
+    </section>
+
+    <section class="result-section">
+      <div id="result" class="diagram-container" role="region" aria-live="polite">
+      </div>
+    </section>
+
+    <section id="selectionSection" class="selection-section" >
+      <div id="selectionIndicator" class="selection-indicator">
+        <div class="selection-header">
+          <strong>Selected:</strong> 
+          <span id="selectedText" class="selected-text"></span>
+        </div>
+        <div class="deep-dive-input-wrapper">
+          <input 
+            id="deepDiveQuery" 
+            type="text"
+            placeholder="Ask about this selection…" 
+            autocomplete="off"
+            aria-label="Ask about selected content"
+          />
+          <button id="askBtn" class="secondary-btn" aria-label="Ask question">
+            Ask
+          </button>
+        </div>
+      </div>
+
+      <div id="deepDiveResponse" class="deep-dive-response"></div>
+    </section>
+  </main>
+
+  <div id="notifications" class="notification-container" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/desktop/js/app.js"></script>
+  
+  <script nomodule>
+    document.body.innerHTML = '<div class="error-message" style="text-align: center; padding: 2rem;"><h2>Browser Not Supported</h2><p>Please use a modern browser that supports ES6 modules.</p></div>';
+  </script>
+</body>
+</html>

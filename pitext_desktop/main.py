@@ -1,0 +1,83 @@
+# main.py
+"""
+PiText desktop- Main application entry point.
+"""
+
+import logging
+import sys
+from pathlib import Path
+
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+
+# Ensure project root is on sys.path
+sys.path.insert(0, str(Path(__file__).parent))
+
+from api.routes import router, setup_static_routes
+from api.middleware import setup_middleware
+from core.config import get_config
+
+
+def setup_logging():
+    """Configure application logging."""
+    logging.basicConfig(
+        level=logging.INFO,  # Ensure this is INFO, not DEBUG
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)]
+    )
+    
+    # Set specific loggers to INFO level
+    logging.getLogger("core.pipeline").setLevel(logging.INFO)
+    logging.getLogger("core.sanitizer").setLevel(logging.INFO)
+    logging.getLogger("api.routes").setLevel(logging.INFO)
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application."""
+    config = get_config()
+
+    app = FastAPI(
+        title="PiText CodeGen",
+        description="Visual code generation and Mermaid diagram creator",
+        version="0.1.0",
+    )
+
+    # Middleware (CORS, Logging, Security, etc.)
+    setup_middleware(app)
+
+    # Mount static files
+    setup_static_routes(app)
+
+    # API routes
+    app.include_router(router)
+
+    # Root redirect
+    @app.get("/", include_in_schema=False)
+    async def root_redirect():
+        return RedirectResponse(url=config.API_PREFIX or "/codegen")
+
+    return app
+
+
+def main():
+    setup_logging()
+    config = get_config()
+
+    app = create_app()
+
+    logging.info(f"PiText CodeGen running at http://{config.HOST}:{config.PORT}")
+
+    uvicorn.run(
+        app,
+        host=config.HOST,
+        port=config.PORT,
+        reload=True,
+    )
+
+
+app = create_app()
+
+if __name__ == "__main__":
+    main()

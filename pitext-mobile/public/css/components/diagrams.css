@@ -1,0 +1,98 @@
+/* public/css/components/diagram.css */
+
+/* ============================================
+   Result Section
+   ============================================ */
+.result-section {
+  margin-bottom: 2rem;
+}
+
+.diagram-container {
+  background: var(--bg-translucent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  min-height: 400px;
+  position: relative;
+  overflow: auto;
+}
+
+/* only sequence diagrams get extra width */
+.diagram-container.sequence-wide {
+  max-width: none;        /* lift the normal cap */
+  width: 1100px;          /* choose your "wide" value */
+  margin: 0 auto;
+}
+
+/* if you need the inner SVG to fill that new width */
+.diagram-container.sequence-wide svg {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  opacity: 0.5;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   Diagram Styles
+   ============================================ */
+.diagram-container .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.diagram-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mermaid customizations */
+.mermaid text {
+  fill: var(--text-white) !important;
+  text-shadow: 1px 1px 2px var(--shadow-dark);
+}
+
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  fill: var(--bg-translucent) !important;
+  stroke: var(--text-white) !important;
+  stroke-width: 2px;
+}
+
+.mermaid .node.element-selected rect,
+.mermaid .node.element-selected circle {
+  stroke: var(--primary-color) !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 6px var(--primary-color));
+}
+
+.mermaid .edgePath path {
+  stroke: var(--text-white) !important;
+  stroke-width: 2px !important;
+}
+
+/* ============================================
+   Diagram Utilities
+   ============================================ */
+.diagram-utils {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: flex-end;
+}

@@ -1,0 +1,33 @@
+/* css/base/typography.css */
+body {
+  background: #000 url("/codegen/PiText_background.png") center/100% auto no-repeat fixed;
+  color: #f0f0f0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 2rem;
+  text-align: center;
+  min-height: 100vh;
+}
+
+h1 {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0,0,0,.8);
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.banner-sub {
+  font-size: 1.1rem;
+  margin: 0.25rem auto;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.banner-example {
+  font-size: 0.95rem;
+  margin: 0.25rem auto 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.eg {
+  color: #FFD600;
+  font-weight: 500;
+}

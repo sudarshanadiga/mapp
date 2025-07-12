@@ -1,0 +1,46 @@
+/* public/css/responsive/mobile.css */
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+  
+  .app-main {
+    padding: 1rem;
+  }
+  
+  .input-wrapper {
+    flex-direction: column;
+  }
+  
+  #query {
+    width: 100%;
+  }
+  
+  .primary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .diagram-container {
+    padding: 1rem;
+    min-height: 300px;
+  }
+  
+  .notification-container {
+    left: 1rem;
+    right: 1rem;
+  }
+  
+  .notification {
+    min-width: auto;
+    transform: translateY(-100px);
+  }
+  
+  .notification-show {
+    transform: translateY(0);
+  }
+}

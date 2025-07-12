@@ -1,0 +1,28 @@
+[
+  {
+    "event_id": "d6c49c72-6032-4fd1-a843-5de63f809de6",
+    "user_id": "test_user",
+    "title": "Test Event - JSON Fix",
+    "description": "Testing the JSON serialization fix",
+    "location": "Test Location",
+    "start_time": "2025-06-23T22:13:16.179996",
+    "end_time": "2025-06-24T00:13:16.179996",
+    "all_day": false,
+    "type": "test",
+    "created": "2025-06-23T22:13:16.179996",
+    "last_modified": "2025-06-23T22:13:16.179996"
+  },
+  {
+    "created": "2025-07-02T00:51:51.093577+00:00",
+    "last_modified": "2025-07-02T00:51:51.093577+00:00",
+    "title": "Debug Test Event",
+    "description": "This is a test event to debug calendar display",
+    "location": "Debug Location",
+    "start_time": "2025-07-03T14:00:00",
+    "end_time": "2025-07-03T15:00:00",
+    "user_id": "default_user",
+    "all_day": false,
+    "type": "debug",
+    "event_id": "8eb0a103-293e-457f-994a-987cec531946"
+  }
+]

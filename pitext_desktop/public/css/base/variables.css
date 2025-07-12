@@ -1,0 +1,25 @@
+/* public/css/base/variables.css */
+
+/* ============================================
+   CSS Variables & Reset
+   ============================================ */
+:root {
+  --primary-color: #FFD600;
+  --bg-dark: #000000;
+  --text-light: #f0f0f0;
+  --text-white: #ffffff;
+  --border-light: rgba(255, 255, 255, 0.3);
+  --bg-translucent: rgba(255, 255, 255, 0.1);
+  --shadow-dark: rgba(0, 0, 0, 0.8);
+  --error-color: #ff6b6b;
+  --success-color: #51cf66;
+  --warning-color: #ffd93d;
+  --info-color: #339af0;
+  
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}

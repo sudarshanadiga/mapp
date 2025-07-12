@@ -1,0 +1,48 @@
+/* css/components/forms.css */
+.input-options {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#prompt {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+#prompt:focus {
+  outline: none;
+  border-color: #FFD600;
+  background: rgba(255,255,255,.15);
+}
+
+#prompt::placeholder {
+  color: rgba(255,255,255,.6);
+}
+
+select {
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  min-width: 150px;
+}
+
+select option {
+  background: #333;
+  color: #fff;
+}

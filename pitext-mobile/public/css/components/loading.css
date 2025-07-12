@@ -1,0 +1,129 @@
+/* public/css/components/loading.css */
+
+/* ============================================
+   Loading States
+   ============================================ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  font-size: 1.125rem;
+  color: var(--text-white);
+}
+
+.loading-tip {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-fast);
+}
+
+.loading-overlay-show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================
+   Error States
+   ============================================ */
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+.error-text {
+  font-size: 1.125rem;
+  color: var(--error-color);
+  max-width: 500px;
+}
+
+.error-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  max-width: 500px;
+  text-align: left;
+}
+
+.error-list li {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--error-color);
+}
+
+.error-list li:last-child {
+  margin-bottom: 0;
+}
+
+.error-details {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.error-details details {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.error-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-white);
+  margin-bottom: 0.5rem;
+}
+
+.error-details pre {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  color: var(--text-white);
+  white-space: pre-wrap;
+  word-break: break-all;
+}

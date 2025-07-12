@@ -1,0 +1,31 @@
+/* public/css/utilities/print.css */
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .app-header,
+  .app-footer,
+  .query-section,
+  .selection-section,
+  .diagram-utils,
+  .notification-container {
+    display: none;
+  }
+  
+  .diagram-container {
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  
+  .mermaid text {
+    fill: black !important;
+    text-shadow: none;
+  }
+}

@@ -1,0 +1,70 @@
+/* css/layout/main.css */
+.input-area {
+  max-width: 800px;
+  margin: 0.5rem auto 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.diagram-section {
+  max-width: 95vw;
+  margin: 2rem auto;
+  background: rgba(255,255,255,.1);
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.3);
+  padding: 2rem;
+}
+
+.diagram-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin: 1.5rem 0;
+}
+
+.diagram-main {
+  flex: 0 0 70%;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diagram-sidebar {
+  flex: 0 0 30%;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.results-container {
+  max-width: 95vw;
+  margin: 2rem auto;
+  min-height: 60vh;
+  background: rgba(255,255,255,.1);
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255,255,255,.3);
+  padding: 2rem;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  font-size: 1.2rem;
+  color: rgba(255,255,255,.6);
+}
+.diagram-section > h3 {
+  text-align: left;
+  margin-left: 30%;
+}
+
+.approval-section .action-buttons {
+  position: relative;
+  left: -10%;
+}
+

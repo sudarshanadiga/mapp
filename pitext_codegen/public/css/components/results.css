@@ -1,0 +1,85 @@
+/* css/components/results.css */
+.loading {
+  color: #FFD600;
+  font-size: 1.2rem;
+  padding: 2rem;
+}
+
+.error {
+  color: #ff6b6b;
+  padding: 2rem;
+}
+
+.success {
+  color: #4CAF50;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+.file-item {
+  margin: 1.5rem 0;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.2);
+  text-align: left;
+}
+
+.file-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,.1);
+  border-bottom: 1px solid rgba(255,255,255,.2);
+}
+
+.file-path {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #FFD600;
+  font-size: 0.9rem;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.copy-btn, .download-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 3px;
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover, .download-btn:hover {
+  background: rgba(255,255,255,.2);
+  border-color: rgba(255,255,255,.5);
+}
+
+.file-content {
+  padding: 0;
+  background: rgba(0,0,0,.5);
+  overflow-x: auto;
+}
+
+.file-content pre {
+  margin: 0;
+  padding: 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #f8f8f2;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.file-content code {
+  font-family: 'Courier New', monospace;
+}

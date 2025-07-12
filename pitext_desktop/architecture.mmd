@@ -1,0 +1,142 @@
+graph TB
+    subgraph "Client Browser"
+        subgraph "UI Layer"
+            HTML[index.html]
+            CSS["Modular CSS<br/>main.css"]
+            HEADER[Header UI]
+            QUERY[Query Input]
+            RESULT[Result Display]
+            SELECTION[Selection UI]
+        end
+        
+        subgraph "JavaScript Core"
+            APP["app.js<br/>Main Controller"]
+            CONFIG["config.js<br/>Frontend Config"]
+            STATE["state.js<br/>State Management"]
+            INIT["init.js<br/>Initialization"]
+        end
+        
+        subgraph "Diagram Components"
+            MERMAID["mermaid.js<br/>Mermaid Manager"]
+            GENERATOR["generator.js<br/>Diagram Generator"]
+            UTILITIES["utilities.js<br/>Export/Zoom"]
+        end
+        
+        subgraph "Selection System"
+            SEL_HANDLER["handler.js<br/>Selection Handler"]
+            DEEPDIVE["deepdive.js<br/>Deep Dive Q&A"]
+        end
+        
+        subgraph "API & Utils"
+            API_CLIENT["api.js<br/>API Client"]
+            DOM["dom.js<br/>DOM Helpers"]
+            HELPERS["helpers.js<br/>Utilities"]
+            EVENTS["events.js<br/>Event Setup"]
+        end
+    end
+    
+    subgraph "FastAPI Server"
+        subgraph "Main Application"
+            MAIN["main.py<br/>ASGI Entry"]
+            FASTAPI[FastAPI App]
+            MIDDLEWARE["middleware.py<br/>CORS/Logging"]
+        end
+        
+        subgraph "API Routes"
+            ROUTES["routes.py<br/>/desktop/*"]
+            DESCRIBE["/describe<br/>Generate Diagram"]
+            DEEPDIVE_EP["/deep-dive<br/>Context Q&A"]
+            HEALTH["/health<br/>Health Check"]
+        end
+        
+        subgraph "Core Pipeline"
+            PIPELINE["pipeline.py<br/>Orchestration"]
+            SANITIZER["sanitizer.py<br/>Mermaid Sanitizer"]
+        end
+        
+        subgraph "LLM Services"
+            LLM_CLIENT["client.py<br/>OpenAI Client"]
+            DIAGRAM_SVC["diagram.py<br/>Diagram Logic"]
+            CONTENT_SVC["content.py<br/>Content Generation"]
+            PROMPTS["prompts.py<br/>Prompt Manager"]
+        end
+        
+        subgraph "Rendering"
+            RENDERER["renderer.py<br/>HTML/Image Output"]
+            PLAYWRIGHT["Playwright<br/>Browser Automation"]
+        end
+        
+        subgraph "Data Models"
+            MODELS["models.py<br/>Pydantic Schemas"]
+        end
+    end
+    
+    subgraph "External Services"
+        OPENAI["OpenAI API<br/>GPT-4"]
+        MERMAID_CDN["Mermaid.js CDN<br/>v11"]
+    end
+    
+    %% Client initialization flow
+    HTML --> APP
+    APP --> INIT
+    APP --> CONFIG
+    APP --> STATE
+    
+    %% Diagram generation flow
+    QUERY --> APP
+    APP --> GENERATOR
+    GENERATOR --> API_CLIENT
+    GENERATOR --> MERMAID
+    GENERATOR --> UTILITIES
+    
+    %% Selection and deep dive
+    RESULT --> SEL_HANDLER
+    SEL_HANDLER --> STATE
+    SELECTION --> DEEPDIVE
+    DEEPDIVE --> API_CLIENT
+    
+    %% API requests
+    API_CLIENT -.->|HTTP POST| DESCRIBE
+    API_CLIENT -.->|HTTP POST| DEEPDIVE_EP
+    API_CLIENT -.->|HTTP GET| HEALTH
+    
+    %% Server routing
+    MAIN --> FASTAPI
+    FASTAPI --> MIDDLEWARE
+    FASTAPI --> ROUTES
+    ROUTES --> DESCRIBE
+    ROUTES --> DEEPDIVE_EP
+    
+    %% Backend processing flow
+    DESCRIBE --> PIPELINE
+    PIPELINE --> DIAGRAM_SVC
+    DIAGRAM_SVC --> LLM_CLIENT
+    DIAGRAM_SVC --> CONTENT_SVC
+    CONTENT_SVC --> PROMPTS
+    PIPELINE --> SANITIZER
+    PIPELINE --> RENDERER
+    
+    DEEPDIVE_EP --> DIAGRAM_SVC
+    
+    %% External integrations
+    LLM_CLIENT -.->|HTTP| OPENAI
+    RENDERER --> PLAYWRIGHT
+    MERMAID -.->|Load Script| MERMAID_CDN
+    
+    %% Data flow
+    PROMPTS --> LLM_CLIENT
+    MODELS --> ROUTES
+    MODELS --> PIPELINE
+    
+    %% Styling
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef pipeline fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef llm fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class HTML,CSS,HEADER,QUERY,RESULT,SELECTION,APP,CONFIG,STATE,INIT,MERMAID,GENERATOR,UTILITIES,SEL_HANDLER,DEEPDIVE,API_CLIENT,DOM,HELPERS,EVENTS frontend
+    class MAIN,FASTAPI,MIDDLEWARE,ROUTES,DESCRIBE,DEEPDIVE_EP,HEALTH,MODELS backend
+    class PIPELINE,SANITIZER,RENDERER,PLAYWRIGHT pipeline
+    class LLM_CLIENT,DIAGRAM_SVC,CONTENT_SVC,PROMPTS llm
+    class OPENAI,MERMAID_CDN external

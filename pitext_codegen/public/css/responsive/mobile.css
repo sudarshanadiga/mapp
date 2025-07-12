@@ -1,0 +1,59 @@
+/* css/responsive/mobile.css */
+@media (max-width: 768px) {
+  body {
+    margin: 1rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .input-options {
+    flex-direction: column;
+  }
+  
+  .input-options > * {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .approve-btn, .reject-btn, .restart-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .diagram-section, .results-container {
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+  
+  .diagram-layout {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .diagram-sidebar {
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .file-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  
+  .selection-indicator {
+    margin: 0.5rem 0;
+    padding: 0.75rem;
+  }
+  
+  .deep-dive-response {
+    margin: 0.5rem 0;
+    padding: 1rem;
+  }
+}

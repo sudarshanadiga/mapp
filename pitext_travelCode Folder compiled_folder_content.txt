@@ -1,0 +1,4274 @@
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\.env.example:
+OPENAI_API_KEY=your_api_key_here
+# Google Maps Authentication - use either API key OR Client ID (not both)
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+maps_client_id=your_google_maps_client_id_here
+maps_client_secret=your_google_maps_client_secret_here
+PORT=3000
+RENDER_MODE=html
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\.env.example ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\main.py:
+"""Entry point for the pitext_travel micro-service.
+Minimal setup that delegates route registration to routes module.
+"""
+import os
+import secrets
+from flask import Flask
+from pitext_travel.routes.travel import create_travel_blueprint
+from pitext_travel.api.chat import bp_chat
+from flask_socketio import SocketIO
+from pitext_travel.routes.websocket import TravelVoiceNS
+from asgiref.wsgi import WsgiToAsgi
+from flask_wtf.csrf import CSRFProtect
+
+# Get the absolute path to the directory where this file is located
+base_dir = os.path.abspath(os.path.dirname(__file__))
+
+# Create the main Flask app
+app = Flask(
+    __name__,
+    static_url_path="/travel/static",
+    static_folder=os.path.join(base_dir, 'static')
+)
+
+# Generate secret key dynamically
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+app.config['SESSION_COOKIE_NAME'] = 'pitext_travel_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
+
+# Register blueprints
+app.register_blueprint(create_travel_blueprint(base_dir))
+app.register_blueprint(bp_chat)
+
+# Create SocketIO wrapper with async_mode='threading'
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+
+# Register your namespace
+socketio.on_namespace(TravelVoiceNS('/travel/voice'))
+
+# Create a custom ASGI app that handles both Flask and SocketIO
+class TravelASGIApp:
+    def __init__(self, flask_app, socketio_app):
+        self.flask_app = WsgiToAsgi(flask_app)
+        self.socketio_app = socketio_app
+    
+    async def __call__(self, scope, receive, send):
+        path = scope.get("path", "")
+        
+        # Route SocketIO requests to the SocketIO app
+        if path.startswith("/socket.io"):
+            # For SocketIO, we need to handle it differently
+            # Since SocketIO with threading mode doesn't have asgi_app,
+            # we'll route these to the Flask app which has SocketIO integrated
+            await self.flask_app(scope, receive, send)
+            return
+        
+        # Route all other requests to the Flask app
+        await self.flask_app(scope, receive, send)
+
+# Export the custom ASGI app
+asgi_app = TravelASGIApp(app, socketio)
+
+# Optional: local dev runner
+if __name__ == "__main__":
+    socketio.run(app, port=int(os.getenv("PORT", 3000)), debug=True)
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\main.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\requirements.txt:
+Flask==2.3.2
+requests==2.31.0
+asgiref>=3.0.0
+openai==1.12.0
+python-dotenv==1.0.0
+flask-cors==4.0.0
+Flask-WTF==1.2.1
+
+python-socketio==5.12.0      # pulled automatically, but pin for safety
+python-engineio==4.11.2      # latest 4.x (supports Engine.IO protocol 4)
+flask_socketio ==5.3.2
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\requirements.txt ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\__init__.py:
+from flask import Flask
+from .api.chat import bp_chat     # new import
+
+def create_app():
+    app = Flask(__name__)
+
+    app.register_blueprint(bp_chat)
+    return app
+# This file makes src a Python package
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\__init__.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\chat.py:
+# pitext_travel/api/chat.py
+import os, json
+from flask import Blueprint, request, jsonify, session
+import openai
+from pitext_travel.api.llm import generate_trip_itinerary
+
+bp_chat = Blueprint("chat", __name__, url_prefix="/travel/api")
+
+# Initialize OpenAI
+api_key = os.getenv('OPENAI_API_KEY')
+if api_key:
+    openai.api_key = api_key
+else:
+    print("Warning: OPENAI_API_KEY not found. Travel features will be limited.")
+
+# Keep conversation context
+MAX_HISTORY = 20
+
+# Improved function schemas
+FUNCTIONS = [
+    {
+        "name": "plan_trip",
+        "description": "Plan a multi-day itinerary for a city. Use this when the user provides BOTH a city name AND number of days.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "description": "The city name for the trip"
+                },
+                "days": {
+                    "type": "integer", 
+                    "description": "Number of days for the trip",
+                    "minimum": 1, 
+                    "maximum": 14
+                }
+            },
+            "required": ["city", "days"]
+        }
+    },
+    {
+        "name": "explain_day",
+        "description": "Explain the itinerary for a specific day or provide an overview of all days",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "day_number": {
+                    "type": "integer",
+                    "description": "The day number to explain (1-based), or 0 for overview",
+                    "minimum": 0
+                }
+            },
+            "required": ["day_number"]
+        }
+    }
+]
+
+@bp_chat.route("/chat", methods=["POST"])
+def chat():
+    user_text = request.json.get("text", "").strip()
+    if not user_text:
+        return jsonify({"reply": "I didn't catch that."})
+
+    # Initialize session data if needed
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+        session['pending_trip'] = {}
+    
+    history = session.get('chat_history', [])
+    
+    # System message that helps the model understand context better
+    system_message = {
+        "role": "system", 
+        "content": """You are a friendly travel planning assistant. Your main job is to help users plan trips by creating detailed itineraries.
+
+IMPORTANT INSTRUCTIONS:
+1. When a user mentions wanting to plan a trip to a city but doesn't specify days, ask them how many days they'd like to spend there.
+2. When you have BOTH the city name AND number of days, immediately call the plan_trip function.
+3. If a user provides a number after you've asked about days, understand that's the number of days for the previously mentioned city.
+4. Be conversational but focused on gathering the needed information.
+5. Common phrases: "3 days", "three days", "a week" (7 days), "weekend" (2 days), "long weekend" (3 days).
+6. When users ask about specific days or want an overview, use the explain_day function.
+7. Phrases like "first day", "day 1", "explain the trip", "tell me about day 2" should trigger explain_day.
+
+Current context: """ + json.dumps(session.get('pending_trip', {}))
+    }
+    
+    # Add user message
+    history.append({"role": "user", "content": user_text})
+    
+    # Keep history manageable but include system message
+    messages = [system_message] + history[-MAX_HISTORY:]
+
+    try:
+        resp = openai.chat.completions.create(
+            model="gpt-4.1",
+            messages=messages,
+            functions=FUNCTIONS,
+            function_call="auto",
+            temperature=0.7
+        ).choices[0].message
+
+        # Handle function calls
+        if resp.function_call:
+            name = resp.function_call.name
+            args = json.loads(resp.function_call.arguments or "{}")
+
+            if name == "plan_trip":
+                try:
+                    # Generate itinerary
+                    itinerary = generate_trip_itinerary(args["city"], args["days"])
+                    
+                    # Store the itinerary in session
+                    session['current_itinerary'] = itinerary
+                    session['current_city'] = args["city"]
+                    session['current_days'] = args["days"]
+                    
+                    # Clear pending trip
+                    session['pending_trip'] = {}
+
+                    # Add to history
+                    history.append({
+                        "role": "assistant",
+                        "content": f"I've created a wonderful {args['days']}-day itinerary for {args['city']}!"
+                    })
+                    session['chat_history'] = history
+                    session.modified = True
+
+                    return jsonify({
+                        "reply": f"I've created a wonderful {args['days']}-day itinerary for {args['city']}! You can see it on the map. Would you like me to explain any specific day or give you an overview?",
+                        "itinerary": itinerary
+                    })
+                except Exception as e:
+                    return jsonify({"reply": f"Sorry, I couldn't plan that trip: {str(e)}"})
+                    
+            elif name == "explain_day":
+                if 'current_itinerary' not in session:
+                    return jsonify({"reply": "I don't have a current itinerary to explain. Would you like me to plan a trip first?"})
+                
+                itinerary = session['current_itinerary']
+                city = session.get('current_city', 'your destination')
+                day_num = args.get("day_number", 0)
+                
+                if day_num == 0:
+                    # Overview
+                    reply = f"Here's an overview of your {len(itinerary['days'])}-day trip to {city}:\n\n"
+                    for i, day in enumerate(itinerary['days']):
+                        reply += f"**{day.get('label', f'Day {i+1}')}**: "
+                        stops = [stop['name'] for stop in day['stops']]
+                        reply += ", ".join(stops) + "\n"
+                else:
+                    # Specific day
+                    if 0 < day_num <= len(itinerary['days']):
+                        day = itinerary['days'][day_num - 1]
+                        reply = f"On {day.get('label', f'Day {day_num}')} in {city}, you'll visit:\n\n"
+                        for j, stop in enumerate(day['stops'], 1):
+                            reply += f"{j}. **{stop['name']}**"
+                            if 'placeType' in stop:
+                                reply += f" ({stop['placeType'].replace('_', ' ')})"
+                            reply += "\n"
+                        reply += f"\nThis day includes {len(day['stops'])} stops. Would you like details about any other day?"
+                    else:
+                        reply = f"I don't have information for day {day_num}. Your trip is {len(itinerary['days'])} days long."
+                
+                history.append({"role": "assistant", "content": reply})
+                session['chat_history'] = history
+                session.modified = True
+                
+                return jsonify({"reply": reply})
+
+        # Regular text response
+        else:
+            # Add assistant response to history
+            history.append({"role": "assistant", "content": resp.content})
+            session['chat_history'] = history
+            session.modified = True
+            
+            return jsonify({"reply": resp.content})
+
+    except Exception as e:
+        print(f"Chat error: {str(e)}")
+        return jsonify({"reply": "I encountered an error. Please try again."})
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\chat.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\config.py:
+# api/config.py
+"""Configuration management for the travel planner API."""
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def get_openai_api_key():
+    """Get OpenAI API key from environment."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY not set")
+    return api_key
+
+
+def get_google_maps_config():
+    """Get Google Maps configuration."""
+    return {
+        "api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""),
+        "client_id": os.getenv("maps_client_id", ""),
+        "client_secret": os.getenv("maps_client_secret", "")
+    }
+
+
+def get_port():
+    """Get port configuration."""
+    return int(os.getenv("PORT", 3000))
+
+
+def get_render_mode():
+    """Get render mode configuration."""
+    return os.getenv("RENDER_MODE", "html")
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\config.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\geocoding.py:
+# api/geocoding.py
+"""Google Maps geocoding and coordinate management."""
+import logging
+import random
+import requests
+from pitext_travel.api.config import get_google_maps_config
+
+logger = logging.getLogger(__name__)
+
+# City coordinates database
+CITY_COORDS = {
+    "paris": (48.8566, 2.3522),
+    "london": (51.5074, -0.1278),
+    "new york": (40.7128, -74.0060),
+    "tokyo": (35.6762, 139.6503),
+    "rome": (41.9028, 12.4964),
+    "barcelona": (41.3851, 2.1734),
+    "amsterdam": (52.3676, 4.9041),
+    "berlin": (52.5200, 13.4050),
+    "prague": (50.0755, 14.4378),
+    "vienna": (48.2082, 16.3738),
+    "budapest": (47.4979, 19.0402),
+    "madrid": (40.4168, -3.7038),
+    "lisbon": (38.7223, -9.1393),
+    "dublin": (53.3498, -6.2603),
+    "stockholm": (59.3293, 18.0686),
+    "copenhagen": (55.6761, 12.5683),
+    "oslo": (59.9139, 10.7522),
+    "helsinki": (60.1699, 24.9384),
+    "athens": (37.9838, 23.7275),
+    "istanbul": (41.0082, 28.9784),
+    "moscow": (55.7558, 37.6173),
+    "dubai": (25.2048, 55.2708),
+    "singapore": (1.3521, 103.8198),
+    "hong kong": (22.3193, 114.1694),
+    "sydney": (33.8688, 151.2093),
+    "melbourne": (37.8136, 144.9631),
+    "los angeles": (34.0522, -118.2437),
+    "san francisco": (37.7749, -122.4194),
+    "chicago": (41.8781, -87.6298),
+    "miami": (25.7617, -80.1918),
+    "toronto": (43.6532, -79.3832),
+    "vancouver": (49.2827, -123.1207),
+    "mexico city": (19.4326, -99.1332),
+    "buenos aires": (34.6118, -58.3960),
+    "rio de janeiro": (22.9068, -43.1729),
+    "sao paulo": (23.5505, -46.6333),
+    "cairo": (30.0444, 31.2357),
+    "marrakech": (31.6295, -7.9811),
+    "cape town": (33.9249, 18.4241),
+    "mumbai": (19.0760, 72.8777),
+    "delhi": (28.7041, 77.1025),
+    "bangkok": (13.7563, 100.5018),
+    "seoul": (37.5665, 126.9780),
+    "beijing": (39.9042, 116.4074),
+    "shanghai": (31.2304, 121.4737)
+}
+
+def get_place_details(place_name, city):
+    """
+    Use Google Places API Text Search to get coordinates and place types.
+    Improved: Adds explicit country and location bias for accuracy.
+    """
+    config = get_google_maps_config()
+    google_api_key = config.get("api_key")
+    
+    if not google_api_key:
+        logger.warning("No Google Maps API key found, using estimated coordinates")
+        lat, lng = get_estimated_coordinates(city)
+        return lat, lng, None, None
+
+    # Get city coordinates for location bias
+    lat, lng = get_estimated_coordinates(city)
+    locationbias = f"point:{lat},{lng}"
+
+    # Build a more explicit query string
+    query = f"{place_name}, {city}, India"
+
+    try:
+        url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+        params = {
+            "query": query,
+            "key": google_api_key,
+            "locationbias": locationbias
+        }
+        logger.info(f"Places API query: {params['query']} | locationbias: {params['locationbias']}")
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
+
+        if data.get("status") == "OK" and data.get("results"):
+            result = data["results"][0]
+            location = result["geometry"]["location"]
+            place_types = result.get("types", [])
+            primary_type = place_types[0] if place_types else None
+            logger.info(f"Found details for {place_name}: {location['lat']}, {location['lng']}, Types: {place_types}")
+            return location["lat"], location["lng"], primary_type, place_types
+        else:
+            logger.warning(f"Places API search failed for {place_name}: {data.get('status', 'Unknown')}")
+            return lat, lng, None, None
+            
+    except Exception as e:
+        logger.error(f"Places API error for {place_name}: {e}")
+        return lat, lng, None, None
+
+def get_estimated_coordinates(city):
+    """Get estimated coordinates for major cities"""
+    # Add small random offset to avoid exact duplicates
+    base_lat, base_lng = CITY_COORDS.get(city.lower(), (48.8566, 2.3522))
+    offset = random.uniform(-0.01, 0.01)
+    return base_lat + offset, base_lng + offset
+
+def enhance_with_geocoding(itinerary, city):
+    """Add accurate coordinates and place type to each stop."""
+    enhanced = {"days": []}
+    
+    for day in itinerary.get("days", []):
+        enhanced_day = {
+            "label": day.get("label", "Day"),
+            "color": day.get("color", "#4285f4"),
+            "stops": []
+        }
+        
+        for stop in day.get("stops", []):
+            place_name = stop.get("name", "Unknown Place")
+            # Get lat, lng, primary_type, and all types
+            lat, lng, primary_type, place_types = get_place_details(place_name, city)
+            
+            enhanced_stop = {
+                "name": place_name,
+                "lat": lat,
+                "lng": lng,
+                "placeType": primary_type,  # Send place type to frontend
+                "types": place_types  # Send all types for more options
+            }
+            enhanced_day["stops"].append(enhanced_stop)
+            
+        enhanced["days"].append(enhanced_day)
+    
+    return enhanced
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\geocoding.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\llm.py:
+# api/llm.py
+"""OpenAI API integration for generating travel itineraries."""
+import json
+import re
+import logging
+from openai import OpenAI
+from pitext_travel.api.config import get_openai_api_key
+from pitext_travel.api.geocoding import enhance_with_geocoding, get_estimated_coordinates
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def get_client() -> OpenAI:
+    """Return an OpenAI client initialized from the OPENAI_API_KEY env var."""
+    api_key = get_openai_api_key()
+    return OpenAI(api_key=api_key, timeout=30.0)
+
+def generate_trip_itinerary(city, days=3):
+    """
+    Generate a multi-day itinerary using OpenAI + Google Geocoding for accurate coordinates.
+    """
+    logger.info(f"Starting enhanced itinerary generation for {city}, {days} days")
+    
+    try:
+        client = get_client()
+        
+        # Enhanced prompt for better place names
+        system_prompt = (
+            "You are a knowledgeable travel expert. Generate a detailed day-by-day itinerary "
+            "with specific, well-known attractions and landmarks. "
+            "For each stop, provide the exact name as it would appear on Google Maps. "
+            "Focus on must-see attractions, museums, landmarks, and popular areas. "
+            "Keep each day to 3-4 stops maximum for a comfortable pace. "
+            "Return ONLY a JSON object with this exact structure: "
+            '{"days":[{"label":"Day 1","color":"#ff6b6b","stops":[{"name":"Exact Place Name"}]}]}'
+        )
+        
+        user_prompt = (
+            f"Create a {days}-day itinerary for {city}. Include specific landmark names, "
+            f"famous attractions, and notable areas. Make sure place names are accurate "
+            f"and would be recognized by Google Maps."
+        )
+
+        logger.info("Making OpenAI API call for itinerary...")
+        response = client.chat.completions.create(
+            model="gpt-4.1",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.3,  # Lower temperature for more consistent place names
+            max_tokens=1500,
+            timeout=25
+        )
+        
+        text = response.choices[0].message.content.strip()
+        logger.info(f"Received OpenAI response length: {len(text)} characters")
+        
+        # Log the full response for debugging
+        if len(text) < 1000:
+            logger.info(f"Full OpenAI response: {text}")
+        else:
+            logger.info(f"OpenAI response (first 500 chars): {text[:500]}...")
+            logger.info(f"OpenAI response (last 500 chars): ...{text[-500:]}")
+        
+        # Clean and parse JSON
+        text = re.sub(r'^```(?:json)?\s*', '', text, flags=re.MULTILINE)
+        text = re.sub(r'```\s*$', '', text, flags=re.MULTILINE)
+        text = text.strip()
+        
+        try:
+            itinerary = json.loads(text)
+            logger.info("Successfully parsed JSON response")
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error: {e}")
+            logger.error(f"Failed to parse text: {text}")
+            
+            # Try regex extraction as fallback
+            json_match = re.search(r'\{.*\}', text, re.DOTALL)
+            if json_match:
+                try:
+                    itinerary = json.loads(json_match.group(0))
+                    logger.info("Successfully parsed JSON using regex extraction")
+                except json.JSONDecodeError:
+                    logger.error("Regex extraction also failed")
+                    raise ValueError("No valid JSON found in response")
+            else:
+                raise ValueError("No JSON structure found in response")
+        
+        # Validate the structure
+        if not isinstance(itinerary, dict) or 'days' not in itinerary:
+            logger.error(f"Invalid itinerary structure: {itinerary}")
+            raise ValueError("Invalid itinerary structure - missing 'days' key")
+        
+        # Enhance with Google geocoding
+        logger.info("Enhancing itinerary with geocoding...")
+        enhanced_itinerary = enhance_with_geocoding(itinerary, city)
+        
+        logger.info("Successfully generated enhanced itinerary")
+        return enhanced_itinerary
+        
+    except Exception as e:
+        logger.error(f"Error generating itinerary: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        return get_fallback_itinerary(city, days)
+def get_fallback_itinerary(city, days):
+    """Generate a basic fallback itinerary"""
+    colors = ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#feca57", "#ff9ff3", "#54a0ff"]
+    
+    fallback = {"days": []}
+    
+    for i in range(days):
+        lat, lng = get_estimated_coordinates(city)
+        
+        # Create slight variations for different stops
+        stops = []
+        for j in range(3):
+            offset_lat = lat + (j * 0.01) - 0.01
+            offset_lng = lng + (j * 0.01) - 0.01
+            
+            stops.append({
+                "name": f"{city} Attraction {j+1}",
+                "lat": offset_lat,
+                "lng": offset_lng
+            })
+        
+        fallback["days"].append({
+            "label": f"Day {i+1}",
+            "color": colors[i % len(colors)],
+            "stops": stops
+        })
+    
+    return fallback
+
+
+# Testing
+if __name__ == "__main__":
+    result = generate_trip_itinerary("Prague", 3)
+    print(json.dumps(result, indent=2))
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\llm.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\__init__.py:
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\__init__.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\realtime\openai_client.py:
+"""OpenAI Realtime WebSocket helper
+===================================
+A thin, asyncio‑friendly wrapper around the OpenAI Realtime API that:
+    • opens one persistent WebSocket per user session
+    • sends a *session.update* upon connect to configure modalities & voice
+    • provides   push_pcm() / commit()  for streaming microphone audio
+    • exposes   async for ev in client.events()   to consume server events
+
+The class is deliberately transport‑agnostic: whatever part of your Flask
+app owns the user’s Socket.IO connection can instantiate **RealtimeClient**
+and stitch the two layers together.
+
+Usage (inside a Socket.IO namespace):
+-------------------------------------
+client = RealtimeClient(api_key=OPENAI_KEY)
+await client.connect()
+...
+await client.push_pcm(pcm_bytes)
+...
+async for event in client.events():
+    process(event)
+"""
+from __future__ import annotations
+
+import asyncio
+import base64
+import json
+import os
+import contextlib
+from typing import AsyncGenerator, Dict, Optional
+
+import websockets
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
+
+OPENAI_URL = os.getenv("OPENAI_REALTIME_URL", "wss://api.openai.com/v1/realtime")
+DEFAULT_MODEL = os.getenv("OPENAI_REALTIME_MODEL", "gpt-4o-audio-preview")
+
+# ---------------------------------------------------------------------------
+# Helper — tiny base‑64 helper to avoid typing the same boilerplate
+# ---------------------------------------------------------------------------
+_b64encode = lambda b: base64.b64encode(b).decode()
+
+
+class RealtimeClient:
+    """Maintain a single WS connection to OpenAI Realtime."""
+
+    def __init__(self, api_key: str, *, model: str = DEFAULT_MODEL):
+        self._api_key = api_key
+        self._model = model
+        self._ws: Optional[websockets.WebSocketClientProtocol] = None
+        self._ev_q: asyncio.Queue = asyncio.Queue()
+        self._reader_task: Optional[asyncio.Task] = None
+
+    # ------------------------------------------------------------------
+    # Connection lifecycle
+    # ------------------------------------------------------------------
+    async def connect(self) -> None:
+        headers = {"Authorization": f"Bearer {self._api_key}"}
+        self._ws = await websockets.connect(
+            OPENAI_URL,
+            extra_headers=headers,
+            max_size=2 ** 22,   # 4 MiB – big enough for long responses
+        )
+
+        # Configure session (24 kHz PCM in/out, alloy voice)
+        await self._send({
+            "type": "session.update",
+            "session": {
+                "modalities": ["audio", "text"],
+                "model": self._model,
+                "input_audio_format": "pcm16",
+                "output_audio_format": "pcm16",
+                "voice": {"name": "alloy"},
+            },
+        })
+
+        # Spawn background reader
+        self._reader_task = asyncio.create_task(self._reader())
+
+    async def close(self) -> None:
+        if self._ws and not self._ws.closed:
+            await self._ws.close()
+        if self._reader_task:
+            self._reader_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._reader_task
+
+    # ------------------------------------------------------------------
+    # Public API – audio upload + event iterator
+    # ------------------------------------------------------------------
+    async def push_pcm(self, pcm_bytes: bytes) -> None:
+        """Append raw 16‑bit PCM samples to the server buffer."""
+        if not pcm_bytes:
+            return
+        await self._send({
+            "type": "input_audio_buffer.append",
+            "audio": _b64encode(pcm_bytes),
+        })
+
+    async def commit(self) -> None:
+        """Flush the buffer so server‑side VAD can process the utterance."""
+        await self._send({"type": "input_audio_buffer.commit"})
+
+    async def events(self) -> AsyncGenerator[Dict, None]:
+        """Iterate over OpenAI events as they arrive."""
+        while True:
+            ev = await self._ev_q.get()
+            yield ev
+
+    # ------------------------------------------------------------------
+    # Internals
+    # ------------------------------------------------------------------
+    async def _send(self, payload: Dict) -> None:
+        if not self._ws:
+            raise RuntimeError("RealtimeClient not connected")
+        await self._ws.send(json.dumps(payload))
+
+    async def _reader(self) -> None:
+        try:
+            async for msg in self._ws:
+                try:
+                    ev = json.loads(msg)
+                except json.JSONDecodeError:
+                    continue  # skip garbage
+                await self._ev_q.put(ev)
+        except (ConnectionClosedOK, ConnectionClosedError):
+            pass
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\api\realtime\openai_client.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\routes\travel.py:
+"""Flask routes for the travel planner application.
+All routes are grouped under the /travel prefix.
+"""
+import os
+from flask import Blueprint, render_template, jsonify, request
+from flask_wtf.csrf import generate_csrf
+from pitext_travel.api.llm import generate_trip_itinerary
+from pitext_travel.api.config import get_google_maps_config
+
+
+def create_travel_blueprint(base_dir):
+    """Create and configure the travel blueprint.
+    
+    Args:
+        base_dir: Absolute path to the application directory
+    
+    Returns:
+        Configured Flask Blueprint
+    """
+    travel_bp = Blueprint(
+        "travel",
+        __name__,
+        url_prefix="/travel",
+        template_folder=os.path.join(base_dir, 'templates')
+    )
+
+    @travel_bp.route("/", strict_slashes=False)
+    def index():
+        """Landing page for the Travel Planner micro-app."""
+        return render_template("map.html")
+
+    @travel_bp.route("/calendar", strict_slashes=False)
+    def calendar():
+        """Dedicated calendar page for testing FullCalendar integration."""
+        return render_template("calendar.html")
+
+    @travel_bp.route("/api/csrf-token", methods=["GET"])
+    def get_csrf_token():
+        """Get CSRF token for form submissions."""
+        return jsonify({"csrf_token": generate_csrf()})
+
+    @travel_bp.route("/api/config", methods=["GET"])
+    def get_config():
+        """Serve configuration including Google Maps credentials."""
+        config = get_google_maps_config()
+        
+        # Check for either API key or Client ID setup
+        api_key = config["api_key"]
+        client_id = config["client_id"]
+        
+        # Provide debugging info (without exposing full credentials)
+        debug_info = {
+            "has_api_key": bool(api_key and api_key.strip()),
+            "has_client_id": bool(client_id and client_id.strip()),
+            "api_key_length": len(api_key) if api_key else 0,
+            "client_id_prefix": client_id[:10] + "..." if client_id and len(client_id) > 10 else client_id
+        }
+        
+        print(f"Maps config debug: {debug_info}")
+        
+        return jsonify({
+            "google_maps_api_key": api_key,
+            "google_maps_client_id": client_id,
+            "auth_type": "client_id" if client_id else "api_key",
+            "debug": debug_info
+        })
+
+    @travel_bp.route("/api/itinerary", methods=["GET", "POST"])
+    def get_itinerary():
+        """Generate a travel itinerary using the OpenAI API."""
+        if request.method == "POST":
+            payload = request.get_json(force=True) or {}
+            city = payload.get("city", "Paris")
+            days = int(payload.get("days", 3))
+        else:
+            city, days = "Paris", 3
+
+        try:
+            itinerary = generate_trip_itinerary(city, days)
+            return jsonify(itinerary)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return travel_bp
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\routes\travel.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\routes\websocket.py:
+# ── imports ────────────────────────────────────────────────────────────────
+import asyncio, logging, base64
+from flask import current_app
+from flask_socketio import Namespace, emit
+from ..api.realtime.openai_client import RealtimeClient
+
+log = logging.getLogger(__name__)
+
+# ── namespace ──────────────────────────────────────────────────────────────
+class TravelVoiceNS(Namespace):
+    """
+    Socket.IO ↔ OpenAI-Realtime bridge
+    Path: /travel/voice
+    """
+    def __init__(self, namespace):
+        super().__init__(namespace)
+        self.rt = None     # RealtimeClient
+
+    # -------- connects / disconnects --------------------------------------
+    def on_connect(self):
+        api_key = current_app.config['OPENAI_API_KEY']
+        self.rt = RealtimeClient(api_key)
+        asyncio.create_task(self.rt.connect())
+        asyncio.create_task(self._fanout())
+        log.info('Voice WS connected')
+
+    def on_disconnect(self):
+        if self.rt:
+            asyncio.create_task(self.rt.close())
+        log.info('Voice WS disconnected')
+
+    # -------- browser → backend ------------------------------------------
+    def on_audio_chunk(self, data):
+        # data['pcm'] is an ArrayBuffer -> bytes on JS side
+        asyncio.create_task(self.rt.push_pcm(data['pcm']))
+
+    def on_audio_commit(self):
+        asyncio.create_task(self.rt.push_pcm(b'', commit=True))
+
+    # -------- backend → browser ------------------------------------------
+    async def _fanout(self):
+        async for ev in self.rt.events():
+            t = ev.get('type', '')
+            if t == 'conversation.item.created':
+                emit('assistant_text', {'text': ev['item']['message']})
+            elif t == 'output_audio_buffer.payload':
+                emit('assistant_audio', {'audio': ev['audio']})
+            # add other event types if you later use tools / function-calling
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\routes\websocket.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\routes\__init__.py:
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\routes\__init__.py ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\dayColors.js:
+// static/dayColors.js
+
+// 1) Static palette for Days 1–7 (soft, warm, distinct)
+export const DAY_COLOR_MAP = {
+1: "#FFADAD", // pastel-red (Day 1)
+2: "#FFD6A5", // pastel-apricot (Day 2)
+3: "#FFCC99", // pastel-peach (Day 3)
+4: "#FFC4E1", // pastel-pink (Day 4)
+5: "#FDFFB6", // pastel-butter (Day 5)
+6: "#FFB3AB", // pastel-coral (Day 6)
+7: "#FFECB3", // pastel-gold (Day 7)
+};
+
+// 2) Helper to return a colour for any given day index.
+//    If the day is not in the static map, fall back to an HSL-based pastel.
+export function getColourForDay(dayIndex) {
+  // If a static entry exists, return it
+  if (DAY_COLOR_MAP.hasOwnProperty(dayIndex)) {
+    return DAY_COLOR_MAP[dayIndex];
+  }
+  
+  // Otherwise, generate a gentle pastel by spacing hues around the colour wheel.
+  // This ensures undefined days (e.g., Day 8, Day 9, …) still get a soft, distinct hue.
+  const hue = (dayIndex * 45) % 360;      // 45° increments around the circle
+  const saturation = 70;                  // 70% saturation (pastel feel)
+  const lightness = 85;                   // 85% lightness (very soft)
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\dayColors.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\base.css:
+/* static/css/base.css - Global Resets & Base Styles */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, Arial, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: #333;
+}
+
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  opacity: 1 !important;
+}
+
+/* Transitions */
+* {
+  transition: opacity 0.2s ease;
+}
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\base.css ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\calendar.css:
+/* FullCalendar Integration Styles for PiText Travel */
+
+/* Calendar Container */
+#calendar {
+    width: 100%;
+    height: 600px;
+    margin: 20px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: white;
+    padding: 20px;
+}
+
+/* FullCalendar Customizations */
+.fc {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.fc-toolbar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+}
+
+.fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.fc-button {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+}
+
+.fc-button:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fc-button-active {
+    background: rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.fc-daygrid-day {
+    transition: background-color 0.2s ease;
+}
+
+.fc-daygrid-day:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.fc-day-today {
+    background-color: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Event Styling */
+.fc-event {
+    border-radius: 4px !important;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+.fc-event:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.event-content {
+    padding: 2px 4px;
+}
+
+.event-title {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.event-location {
+    font-size: 10px;
+    opacity: 0.8;
+    line-height: 1.1;
+}
+
+/* Modal Styles */
+.calendar-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px 20px 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 15px 20px 20px 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid #eee;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Button Styles */
+.save-btn,
+.edit-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.save-btn:hover,
+.edit-btn:hover {
+    background: #5a67d8;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
+
+/* Error Notification Animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading State */
+.loading {
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading::before {
+    content: 'Loading...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    color: #667eea;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #calendar {
+        height: 500px;
+        margin: 10px 0;
+    }
+    
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1.25rem;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 15px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    #calendar {
+        height: 400px;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1rem;
+    }
+    
+    .fc-button {
+        padding: 6px 12px !important;
+        font-size: 0.875rem !important;
+    }
+}
+
+/* Calendar Integration with Travel App */
+.calendar-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.calendar-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.calendar-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calendar-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.calendar-content {
+    padding: 20px;
+    display: none;
+}
+
+.calendar-content.active {
+    display: block;
+}
+
+/* Event Type Indicators */
+.event-type-travel { background-color: #ff6b6b !important; }
+.event-type-accommodation { background-color: #4ecdc4 !important; }
+.event-type-activity { background-color: #45b7d1 !important; }
+.event-type-food { background-color: #96ceb4 !important; }
+.event-type-transport { background-color: #feca57 !important; }
+
+/* Integration with existing travel app styles */
+#panel .calendar-panel {
+    margin: 10px 0;
+}
+
+#inner-panel .calendar-content {
+    padding: 10px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .modal-header {
+        border-bottom-color: #374151;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        background: #374151;
+        border-color: #4b5563;
+        color: #f9fafb;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        border-color: #667eea;
+    }
+    
+    .cancel-btn {
+        background: #374151;
+        color: #f9fafb;
+    }
+    
+    .cancel-btn:hover {
+        background: #4b5563;
+    }
+} 
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\calendar.css ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\chat.css:
+/* static/css/chat.css */
+
+/* Chat Panel Container */
+.chat-panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 5rem;      /* Above the mic button */
+  width: min(90vw, 420px);  /* Responsive width, max 420px */
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  display: none;  /* Hidden by default */
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 10020;
+  transition: all 0.3s ease;
+}
+
+/* Show panel when it has content */
+.chat-panel:not(:empty) {
+  display: flex;
+}
+
+/* Chat Bubbles */
+.chat-panel .bubble {
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  max-width: 85%;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  animation: fadeIn 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* User Messages (right-aligned) */
+.chat-panel .bubble.user {
+  background: #1976d2;
+  color: white;
+  align-self: flex-end;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+/* Assistant Messages (left-aligned) */
+.chat-panel .bubble.assistant {
+  background: #f0f0f0;
+  color: #333;
+  align-self: flex-start;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+/* Scrollbar Styling */
+.chat-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.chat-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.chat-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mic Button */
+.mic-btn {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1976d2;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  z-index: 10025;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.mic-btn:hover {
+  background: #1565c0;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mic-btn:active {
+  transform: scale(0.95);
+}
+
+.mic-btn.active {
+  background: #d32f2f;
+  animation: pulse 1.5s infinite;
+}
+
+.mic-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* Pulse Animation for Active Recording */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(211, 47, 47, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+  }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .chat-panel {
+    right: 0.5rem;
+    bottom: 4.5rem;
+    width: calc(100vw - 1rem);
+    max-width: none;
+    font-size: 14px;
+  }
+  
+  .chat-panel .bubble {
+    max-width: 90%;
+  }
+  
+  .mic-btn {
+    right: 0.5rem;
+    bottom: 0.5rem;
+  }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .chat-panel {
+    background: rgba(30, 30, 30, 0.95);
+    color: #f0f0f0;
+  }
+  
+  .chat-panel .bubble.assistant {
+    background: #424242;
+    color: #f0f0f0;
+  }
+}
+
+/* Add these styles to the end of chat.css */
+
+/* Disabled state when assistant is speaking */
+.mic-btn.disabled {
+  background: #9e9e9e;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mic-btn.disabled:hover {
+  background: #9e9e9e;
+  transform: none;
+}
+
+/* Visual feedback for when assistant is speaking */
+.chat-panel .bubble.assistant.speaking {
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Add a small status indicator */
+.mic-status {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Update the mic button to show state */
+.mic-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.mic-btn.active::after {
+  content: 'Listening...';
+  color: #d32f2f;
+}
+
+.mic-btn.disabled::after {
+  content: 'Assistant speaking';
+  color: #9e9e9e;
+}
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\chat.css ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\controls.css:
+/* static/css/controls.css - Form and Day Controls Styles */
+
+/* Trip Form Styles */
+#trip-form {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  background-color: transparent;
+  padding: 0;
+  position: relative;
+  z-index: 10020;
+}
+
+#trip-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+#trip-form input[type="text"],
+#trip-form input[type="number"] {
+  flex: 1 1 120px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+#trip-form button,
+#trip-form input[type="submit"] {
+  background-color: #87CEEB;
+  color: #000;
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: all 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 10020;
+  pointer-events: auto;
+}
+
+#trip-form button:hover,
+#trip-form input[type="submit"]:hover {
+  background-color: #6BB6CD;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+#trip-form button:active,
+#trip-form input[type="submit"]:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background-color: #5AA5BC;
+}
+
+/* Day Controls with Checkboxes */
+#day-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  position: relative;
+  z-index: 10010;
+}
+
+#day-controls > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+#day-controls label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#day-controls label:hover {
+  opacity: 0.8;
+}
+
+#day-controls input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4285f4;
+}
+
+#day-controls input[type="checkbox"]:hover {
+  transform: scale(1.1);
+}
+
+/* Old day toggle button styles (for backward compatibility) */
+.day-toggle {
+  background-color: #e74c3c;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.day-toggle:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.day-toggle.active {
+  opacity: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\controls.css ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\map.css:
+/* static/css/map.css - Map Container & Related Styles */
+
+/* Full-Screen Map Container */
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-color: #e0e0e0;
+}
+
+/* Map Container (old structure compatibility) */
+#map-container {
+  position: relative;
+  flex-grow: 1;
+  margin: 1rem auto;
+  max-width: 900px;
+  height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background-color: #e0e0e0;
+}
+
+/* Initial loading message */
+#map .loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+#map .loading p {
+  margin: 0.5rem 0;
+}
+
+#map .loading small {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* Map Overlay for Loading/Errors */
+#map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: #f2f2f2;
+  font-size: 1.1rem;
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  padding: 1rem;
+}
+
+#map-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Info Window Styling (Google Maps) */
+.info-window {
+  max-width: 280px;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.info-window h4 {
+  margin: 0 0 8px 0;
+  color: #1976d2;
+  font-size: 1rem;
+}
+
+.info-window p {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  color: #333;
+}
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\map.css ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\panel.css:
+/* static/css/panel.css – 2025-06-08
+   -- key changes --------------------------------------------------------
+   • Panel width  : min(64vw, 336px)         ⟵ ~30 % narrower
+   • Translucency : rgba(255,255,255,0.80)   ⟵ lighter glass effect
+   ---------------------------------------------------------------------- */
+
+/**************************
+ * 1. PANEL POSITIONING
+ *************************/
+#panel {
+  position: absolute;
+  bottom: 1rem;
+  left:   1rem;
+
+  /* ↓-- narrower: 64 % of viewport or max 336 px (was 92 % / 480 px) */
+  width: min(64vw, 336px);
+
+  max-height: 80vh;
+  z-index: 10030;
+  overflow: visible;
+}
+
+/**************************
+ * 2. INNER CARD LOOK & FEEL
+ *************************/
+#inner-panel {
+  position: relative;
+  padding: 0.75rem 1rem;
+
+  /* ↓-- more see-through (alpha .80 instead of .95) */
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(10px);
+
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  transition: all .3s ease;
+}
+
+/**************************
+ * 3. DAY-CONTROLS ROW
+ *************************/
+#day-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/**************************
+ * 4. TRIP FORM (inputs + button)
+ *************************/
+#trip-form input[type="text"],
+#trip-form input[type="number"] {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+#trip-form button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #55a9d8;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: inset 0 -2px 2px rgba(0, 0, 0, .15);
+}
+
+/**************************
+ * 5. MINIMISE / EXPAND BUTTON
+ *************************/
+#minimize-btn {
+  position: absolute;
+  top:  -14px;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+
+  border: none;
+  border-radius: 50%;
+  background: #007bff;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+  z-index: 10040;
+  transition: transform .1s;
+}
+#minimize-btn:active { transform: scale(0.9); }
+
+/**************************
+ * 6. COLLAPSED STATE
+ *************************/
+#panel.minimized #inner-panel {
+  padding: 0.5rem 0.75rem;
+  width: 100%;                /* keep whatever width we have */
+}
+
+/* show only the day controls when collapsed */
+#panel.minimized #inner-panel > *:not(#day-controls):not(#minimize-btn) {
+  display: none !important;
+}
+#panel.minimized #day-controls { margin-bottom: 0; }
+
+/**************************
+ * 7. OPTIONAL GLOBAL HELPERS
+ *************************/
+#app-container { display: flex; flex-direction: column; min-height: 100vh; }
+header        { background:#007bff; color:#fff; padding:1rem; text-align:center; }
+h1            { font-size:1.8rem; margin:0; }
+footer        { background:#f8f9fa; }
+
+/* === Hexagon Interface with Rounded Corners === */
+.hexagon-interface {
+  /* Keep existing panel styles, just add shape */
+  clip-path: polygon(50% 0%,93.3% 25%,93.3% 75%,50% 100%,6.7% 75%,6.7% 25%); /* fallback */
+  /* Rounded-corner override for modern browsers */
+  clip-path: path("M 50% 2% \
+                   L 91% 25% \
+                   A 6% 6% 0 0 1 97% 30% \
+                   L 97% 70% \
+                   A 6% 6% 0 0 1 91% 75% \
+                   L 50% 98% \
+                   A 6% 6% 0 0 1 9% 75%  \
+                   L 3% 70%  \
+                   A 6% 6% 0 0 1 3% 30%  \
+                   L 9% 25%  \
+                   A 6% 6% 0 0 1 50% 2% \
+                   Z");
+}
+.hexagon-interface::before,
+.hexagon-interface::after {
+  clip-path: inherit;
+}
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\css\panel.css ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\app.js:
+// static/js/app.js - Main Application Entry Point
+
+// Store trip data globally
+let tripData = null;
+
+/**
+ * Initialize the application when DOM is ready
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const { debugLog } = window.TravelHelpers;
+    debugLog("DOM loaded, setting up travel planner...");
+    
+    // Initialize UI components
+    window.TravelPanel.initializePanel();
+    window.TravelForm.initializeForm();
+    
+    // Start loading Google Maps API
+    loadGoogleMapsAPI();
+});
+
+/**
+ * Load Google Maps API dynamically
+ */
+async function loadGoogleMapsAPI() {
+    const { debugLog } = window.TravelHelpers;
+    const { showError } = window.TravelOverlays;
+    const { loadGoogleMapsConfig, createMapsScriptUrl, loadGoogleMapsScript } = window.TravelConfig;
+    
+    try {
+        // Load configuration
+        const config = await loadGoogleMapsConfig();
+        
+        // Create script URL
+        const scriptUrl = createMapsScriptUrl(config);
+        
+        // Load the script
+        await loadGoogleMapsScript(scriptUrl);
+        
+    } catch (error) {
+        showError(`Failed to load Google Maps: ${error.message}`);
+    }
+}
+
+/**
+ * Initialize when Google Maps API is loaded (callback function)
+ */
+window.initializeApp = function() {
+    const { debugLog } = window.TravelHelpers;
+    const { initializeGoogleMap } = window.TravelGoogleMaps;
+    
+    debugLog('Google Maps API loaded successfully');
+    
+    try {
+        initializeGoogleMap();
+        
+        // Load map modules after Google Maps is initialized
+        if (window.loadMapModules) {
+            debugLog('Loading map modules...');
+            window.loadMapModules();
+        } else {
+            debugLog('loadMapModules function not found!');
+        }
+        
+    } catch (error) {
+        const { showError } = window.TravelOverlays;
+        showError(`Map initialization failed: ${error.message}`);
+    }
+};
+
+/**
+ * Process itinerary data
+ */
+async function processItinerary(city, days) {
+    const { debugLog } = window.TravelHelpers;
+    const { showLoading, showError, hideOverlay } = window.TravelOverlays;
+    const { isMapLoaded } = window.TravelGoogleMaps;
+    const { fetchItinerary } = window.TravelAPI;
+    
+    if (!isMapLoaded()) {
+        showError("Google Maps is still loading. Please wait a moment and try again.");
+        return;
+    }
+    
+    // Show loading
+    showLoading("Generating your Holi :) Day plans!");
+    
+    try {
+        // Fetch itinerary
+        const data = await fetchItinerary(city, days);
+        
+        // Store trip data
+        tripData = data;
+        
+        // Render on map
+        renderTripOnMap(data);
+        
+        // Hide loading
+        hideOverlay();
+        
+    } catch (error) {
+        showError(`Failed to load itinerary: ${error.message}`);
+    }
+}
+
+/**
+ * Render the complete trip on Google Maps
+ */
+function renderTripOnMap(data) {
+    const { debugLog } = window.TravelHelpers;
+    const { showError } = window.TravelOverlays;
+    const { fitMapToBounds } = window.TravelGoogleMaps;
+
+    // If modules aren't ready yet, store the data and wait
+    if (!window.mapModulesReady) {
+        debugLog("Map modules not ready yet, storing pending render...");
+        window.pendingRender = data;
+        return;
+    }
+
+    debugLog("Map modules ready, rendering trip...");
+
+    // Modules are loaded, proceed with rendering
+    const { createAllMarkers, clearAllMarkers } = window.TravelMarkers;
+    const { createAllRoutes, clearAllRoutes } = window.TravelRoutes;
+    const { renderDayControls, clearDayControls } = window.TravelControls;
+    
+    debugLog("Rendering trip on Google Maps...", data);
+    
+    if (!data.days || data.days.length === 0) {
+        showError("No itinerary data to display");
+        return;
+    }
+    
+    // Clear existing elements
+    clearMapElements();
+    
+    // Create markers
+    const { bounds, totalStops } = createAllMarkers(data);
+    
+    // Create routes
+    createAllRoutes(data);
+    
+    // Hide all days except the first one
+    data.days.forEach((_, index) => {
+        if (index > 0) {
+            const { toggleMarkersForDay } = window.TravelMarkers;
+            const { toggleRoutesForDay } = window.TravelRoutes;
+            toggleMarkersForDay(index, false);
+            toggleRoutesForDay(index, false);
+        }
+    });
+            
+    // Fit map to bounds
+    fitMapToBounds(bounds, totalStops);
+    
+    // Render day controls
+    renderDayControls(data.days);
+    
+    debugLog("Trip rendering complete!");
+}
+/**
+ * Clear all map elements
+ */
+function clearMapElements() {
+    const { debugLog } = window.TravelHelpers;
+
+    if (window.TravelMarkers && window.TravelMarkers.clearAllMarkers) {
+        window.TravelMarkers.clearAllMarkers();
+    }
+    if (window.TravelRoutes && window.TravelRoutes.clearAllRoutes) {
+        window.TravelRoutes.clearAllRoutes();
+    }
+    if (window.TravelControls && window.TravelControls.clearDayControls) {
+        window.TravelControls.clearDayControls();
+    }
+
+
+
+    const { clearAllMarkers } = window.TravelMarkers;
+    const { clearAllRoutes } = window.TravelRoutes;
+    const { clearDayControls } = window.TravelControls;
+    
+    debugLog("Clearing map elements...");
+    
+    clearAllMarkers();
+    clearAllRoutes();
+    clearDayControls();
+}
+
+// Global error handler for Google Maps script loading issues
+window.addEventListener('error', function (e) {
+    if (e.filename && e.filename.includes('maps.googleapis.com')) {
+        const { showError } = window.TravelOverlays;
+        const errMsg = e.message || (e.error && e.error.message) || 'Unknown script error';
+        console.error('Google Maps script error:', errMsg, e);
+
+        showError(`
+            <strong>Google Maps JavaScript failed to load</strong><br><br>
+            <code>${errMsg}</code><br><br>
+            • Check internet connectivity.<br>
+            • Verify the API Key / Client ID.<br>
+            • Ensure your quota hasn't been exceeded.<br><br>
+            See the browser console for the full stack trace.
+        `);
+    }
+}, true);
+
+// Export for other modules
+window.TravelApp = {
+    processItinerary,
+    renderTripOnMap,
+    clearMapElements
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\app.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\chat.js:
+// static/js/chat.js
+// Handles voice transcripts and chat interactions
+
+class Chat {
+  constructor() {
+    this.panel = document.getElementById('chat-panel');
+    this.isSpeaking = false;
+    this.voiceInitialized = false;
+    
+    // Initialize voice on first user interaction
+    this.initializeVoice();
+    
+    // Set up voice integration
+    if (window.voice) {
+      window.voice.onTranscript = t => this.handleUser(t);
+    }
+  }
+
+  initializeVoice() {
+    // Many browsers require user interaction to enable speech synthesis
+    const initHandler = () => {
+      if (!this.voiceInitialized && 'speechSynthesis' in window) {
+        // Get voices to initialize the speech synthesis
+        const voices = window.speechSynthesis.getVoices();
+        console.log(`Speech synthesis initialized with ${voices.length} voices`);
+        
+        // Test speech synthesis with empty utterance
+        const testUtterance = new SpeechSynthesisUtterance('');
+        testUtterance.volume = 0;
+        window.speechSynthesis.speak(testUtterance);
+        
+        this.voiceInitialized = true;
+        
+        // Remove the event listeners after initialization
+        document.removeEventListener('click', initHandler);
+        document.removeEventListener('touchstart', initHandler);
+      }
+    };
+
+    // Add event listeners for user interaction
+    document.addEventListener('click', initHandler);
+    document.addEventListener('touchstart', initHandler);
+    
+    // Also try to initialize immediately
+    if ('speechSynthesis' in window) {
+      // Load voices
+      window.speechSynthesis.getVoices();
+      
+      // Chrome loads voices asynchronously
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          const voices = window.speechSynthesis.getVoices();
+          console.log(`Voices loaded: ${voices.length} available`);
+        };
+      }
+    }
+  }
+
+  async handleUser(text) {
+    this.addBubble('user', text);
+
+    try {
+      const res = await fetch('/travel/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text}),
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Show reply
+      this.addBubble('assistant', data.reply);
+      
+      // Speak the reply
+      this.speakText(data.reply);
+
+      // Handle itinerary if present AND it's a new trip
+      if (data.itinerary && window.TravelApp) {
+        // Only render if it's a new itinerary (check if city/days changed)
+        const isNewTrip = data.reply.includes("I've created") || 
+                          data.reply.includes("planned") ||
+                          data.reply.includes("itinerary for");
+        
+        if (isNewTrip) {
+          window.TravelApp.renderTripOnMap(data.itinerary);
+        }
+      }
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      this.addBubble('assistant', 'Sorry, I encountered an error. Please try again.');
+    }
+  }
+
+  speakText(text) {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+
+    // Notify voice controller that assistant is about to speak
+    if (window.voice && window.voice.setAssistantSpeaking) {
+      window.voice.setAssistantSpeaking(true);
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    // Wait a bit for cancel to complete
+    setTimeout(() => {
+      // Remove markdown formatting for cleaner speech
+      const cleanText = text
+        .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove bold **text**
+        .replace(/\*(.*?)\*/g, '$1')      // Remove italic *text*
+        .replace(/\n+/g, '. ')            // Replace newlines with periods
+        .replace(/[#_~`]/g, '');          // Remove other markdown chars
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // Configure the utterance
+      utterance.rate = 0.9;     // Slightly slower for clarity
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;   // Slightly lower volume to reduce pickup
+      utterance.lang = 'en-US';
+      
+      // Select a voice if available
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Try to find an English voice
+        const englishVoice = voices.find(voice => 
+          voice.lang.startsWith('en') && !voice.name.includes('Google')
+        ) || voices[0];
+        utterance.voice = englishVoice;
+        console.log(`Using voice: ${englishVoice.name}`);
+      }
+      
+      // Handle events
+      utterance.onstart = () => {
+        this.isSpeaking = true;
+        console.log('Started speaking:', cleanText.substring(0, 50) + '...');
+      };
+      
+      utterance.onend = () => {
+        this.isSpeaking = false;
+        console.log('Finished speaking');
+        
+        // Notify voice controller that assistant finished speaking
+        if (window.voice && window.voice.setAssistantSpeaking) {
+          window.voice.setAssistantSpeaking(false);
+        }
+        
+        // DO NOT automatically restart voice recognition
+        // User must click the mic button to speak again
+        console.log('Click the mic button to speak again');
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error, event);
+        this.isSpeaking = false;
+        
+        // Notify voice controller on error too
+        if (window.voice && window.voice.setAssistantSpeaking) {
+          window.voice.setAssistantSpeaking(false);
+        }
+        
+        // Try to help debug common issues
+        if (event.error === 'not-allowed') {
+          console.error('Speech synthesis not allowed. User interaction may be required.');
+        }
+      };
+
+      // Speak
+      try {
+        window.speechSynthesis.speak(utterance);
+        console.log('Speech synthesis started');
+      } catch (error) {
+        console.error('Failed to start speech:', error);
+        // Notify voice controller on failure
+        if (window.voice && window.voice.setAssistantSpeaking) {
+          window.voice.setAssistantSpeaking(false);
+        }
+      }
+    }, 100);
+  }
+  
+  addBubble(role, text) {
+    const div = document.createElement('div');
+    div.className = `bubble ${role}`;
+    
+    // Parse markdown-style formatting for display
+    const formattedText = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
+      .replace(/\n/g, '<br>');                           // Line breaks
+    
+    div.innerHTML = formattedText;
+    this.panel.appendChild(div);
+    
+    // Ensure panel is visible
+    this.panel.style.display = 'block';
+    
+    // Smooth scroll to latest message
+    setTimeout(() => {
+      div.scrollIntoView({behavior: 'smooth', block: 'end'});
+    }, 100);
+  }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.chatInstance = new Chat();
+  console.log('Chat system initialized');
+});
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\chat.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\voice.js:
+// static/js/voice.js
+// ---------------------------------------------------------------------------
+// Web‑Audio voice controller for OpenAI Realtime
+// ---------------------------------------------------------------------------
+// Responsibilities
+//   • Capture microphone at 24 kHz mono PCM using an AudioWorklet
+//   • Stream raw PCM chunks to the backend through Socket.IO
+//   • Send a commit signal when the user stops speaking (mic toggle)
+//   • Receive base‑64 PCM from the backend (`assistant_audio`) and play it
+//   • Expose a global `window.voice` object so existing UI code can call
+//       voice.start(), voice.stop(), voice.toggle(), etc.
+//
+// Assumptions
+//   • The backend Socket.IO namespace is `/travel/voice` (see websocket.py)
+//   • `socket.io.js` (or ESM) is already loaded on the page and exposes `io`
+//   • `input-pcm-processor.js` (AudioWorklet) is served at
+//         /static/js/audio/input-pcm-processor.js
+//   • A mic button exists with id `#mic-btn`
+// ---------------------------------------------------------------------------
+/* global io */
+
+(function () {
+  class VoiceController {
+    constructor (buttonSelector = '#mic-btn') {
+      // ---------------------------------------------------------------------
+      // 1  UI: mic button ----------------------------------------------------
+      // ---------------------------------------------------------------------
+      this.button = document.querySelector(buttonSelector)
+      if (!this.button) {
+        console.warn('Mic button not found – voice disabled')
+        return
+      }
+      this.button.addEventListener('click', () => this.toggle())
+
+      // ---------------------------------------------------------------------
+      // 2  Socket.IO connection to backend ----------------------------------
+      // ---------------------------------------------------------------------
+      this.socket = io('/travel/voice')
+
+      // Playback handler (assistant → audio chunks)
+      this.socket.on('assistant_audio', ({ audio }) => this._playAssistant(b64ToPCM(audio)))
+
+      // Optional: assistant text (hook for chat bubble ‑ only if you want it)
+      this.socket.on('assistant_text', ({ text }) => {
+        if (window.TravelChat) window.TravelChat.addAssistantMessage(text)
+      })
+
+      // ---------------------------------------------------------------------
+      // 3  Audio context / worklet ------------------------------------------
+      // ---------------------------------------------------------------------
+      this.audioCtx = null         // lazy‑init after first click
+      this.worklet = null
+      this.isRecording = false
+    }
+
+    // ---------------------------------------------------------------------
+    // Public API (used by other JS modules if needed) ----------------------
+    // ---------------------------------------------------------------------
+    async start () {
+      if (this.isRecording) return
+
+      await this._ensureAudioPipeline()
+      await this.audioCtx.resume()       // required after a user gesture
+      this.button.classList.add('active')
+      this.isRecording = true
+    }
+
+    stop () {
+      if (!this.isRecording) return
+      this.button.classList.remove('active')
+      this.isRecording = false
+      // Tell backend to commit what we just said so server‑side VAD can act
+      this.socket.emit('audio_commit')
+    }
+
+    toggle () {
+      this.isRecording ? this.stop() : this.start()
+    }
+
+    // ---------------------------------------------------------------------
+    // Private helpers ------------------------------------------------------
+    // ---------------------------------------------------------------------
+    async _ensureAudioPipeline () {
+      if (this.audioCtx) return
+
+      // Create AudioContext matching OpenAI 24 kHz sample rate
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+        sampleRate: 24000
+      })
+
+      // Load the AudioWorklet that converts float‑32 to 16‑bit PCM LE
+      try {
+        await this.audioCtx.audioWorklet.addModule('/static/js/audio/input-pcm-processor.js')
+      } catch (err) {
+        console.error('Failed to load AudioWorklet:', err)
+        return
+      }
+
+      // Open microphone stream (prompts the user the first time)
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const src = this.audioCtx.createMediaStreamSource(this.stream)
+
+      // Worklet node that receives Float32 chunks and sends ArrayBuffer via port
+      this.worklet = new AudioWorkletNode(this.audioCtx, 'input-pcm')
+
+      // Forward PCM to backend in small chunks (~128 frames = ~5 ms)
+      this.worklet.port.onmessage = ({ data }) => {
+        this.socket.emit('audio_chunk', { pcm: data })
+      }
+
+      // Mic → worklet (no need to monitor output)
+      src.connect(this.worklet)
+    }
+
+    _playAssistant ({ float32, sampleRate = 24000 }) {
+      // Ensure AudioContext exists (might be closed if user never spoke yet)
+      if (!this.audioCtx) {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+          sampleRate
+        })
+      }
+
+      const buf = this.audioCtx.createBuffer(1, float32.length, sampleRate)
+      buf.copyToChannel(float32, 0)
+      const src = this.audioCtx.createBufferSource()
+      src.buffer = buf
+      src.connect(this.audioCtx.destination)
+      src.start()
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Helper: base‑64 → Float32Array (normalised −1 … +1) -------------------
+  // -----------------------------------------------------------------------
+  function b64ToPCM (b64) {
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+    const int16 = new Int16Array(bytes.buffer)
+    const float32 = Float32Array.from(int16, s => s / 0x7fff)
+    return { float32, sampleRate: 24000 }
+  }
+
+  // Attach globally so other scripts can call voice.toggle(), etc.
+  window.voice = new VoiceController()
+})()
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\voice.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\api\client.js:
+// static/js/api/client.js - API Communication
+
+/**
+ * Fetch itinerary from Flask backend
+ */
+async function fetchItinerary(city = "Paris", days = 3) {
+    const { debugLog, errorLog } = window.TravelHelpers;
+    const { API_ENDPOINTS } = window.TravelConstants;
+    
+    debugLog(`Fetching itinerary for ${city}, ${days} days...`);
+    
+    const endpoint = API_ENDPOINTS.ITINERARY;
+    const fetchOptions = city && days ? {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city, days })
+    } : undefined;
+
+    try {
+        const response = await fetch(endpoint, fetchOptions);
+        
+        debugLog("API response status:", response.status);
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        debugLog("API response data:", data);
+        
+        if (!data.days || !Array.isArray(data.days)) {
+            errorLog("Invalid data structure:", data);
+            throw new Error("Invalid itinerary data received from server");
+        }
+        
+        if (data.days.length === 0) {
+            throw new Error("No itinerary data returned");
+        }
+        
+        return data;
+    } catch (error) {
+        errorLog("Fetch error:", error);
+        throw error;
+    }
+}
+
+// Export for other modules
+window.TravelAPI = {
+    fetchItinerary
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\api\client.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\api\config.js:
+// static/js/api/config.js - Frontend Configuration Loading
+
+/**
+ * Load Google Maps configuration from backend
+ */
+async function loadGoogleMapsConfig() {
+    const { debugLog, errorLog } = window.TravelHelpers;
+    const { API_ENDPOINTS } = window.TravelConstants;
+    
+    debugLog("Loading Google Maps API configuration...");
+    
+    try {
+        const response = await fetch(API_ENDPOINTS.CONFIG);
+        
+        if (!response.ok) {
+            throw new Error(`Config request failed: ${response.status}`);
+        }
+        
+        const config = await response.json();
+        debugLog("Config loaded:", config);
+        
+        return config;
+    } catch (error) {
+        errorLog('Failed to load config:', error);
+        throw error;
+    }
+}
+
+/**
+ * Create Google Maps script URL based on configuration
+ */
+function createMapsScriptUrl(config) {
+    const { debugLog } = window.TravelHelpers;
+    let scriptUrl;
+    
+    if (config.auth_type === "client_id" && config.google_maps_client_id && config.google_maps_client_id.trim()) {
+        // Use Client ID authentication
+        const clientId = config.google_maps_client_id;
+        
+        // Validate Client ID format
+        if (!clientId.startsWith('gme-') && clientId.length < 20) {
+            throw new Error("Invalid Client ID format. Expected format: gme-company or long client ID");
+        }
+        
+        scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${config.google_maps_api_key}&libraries=places,marker,geometry&callback=initializeApp`;
+        debugLog("Using Google Maps Client ID authentication");
+    } else if (config.google_maps_api_key && config.google_maps_api_key.trim()) {
+        // Use API Key authentication
+        scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${config.google_maps_api_key}&libraries=places,marker&callback=initializeApp`;        debugLog("Using Google Maps API Key authentication");
+    } else {
+        throw new Error("No valid Google Maps credentials found. Please check your environment variables.");
+    }
+    
+    return scriptUrl;
+}
+
+/**
+ * Load Google Maps API script
+ */
+function loadGoogleMapsScript(scriptUrl) {
+    const { debugLog, errorLog } = window.TravelHelpers;
+    
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = scriptUrl;
+        script.async = true;
+        script.defer = true;
+        
+        script.onload = () => {
+            debugLog("Google Maps script loaded successfully");
+            resolve();
+        };
+        
+        script.onerror = () => {
+            errorLog("Failed to load Google Maps script");
+            reject(new Error('Failed to load Google Maps script'));
+        };
+        
+        document.head.appendChild(script);
+        debugLog("Google Maps script added to page");
+    });
+}
+
+// Export for other modules
+window.TravelConfig = {
+    loadGoogleMapsConfig,
+    createMapsScriptUrl,
+    loadGoogleMapsScript
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\api\config.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\audio\input-pcm-processor.js:
+// static/js/audio/input-pcm-processor.js
+// AudioWorkletProcessor that converts Float32 input frames (-1..1) into
+// a transferable ArrayBuffer containing 16‑bit little‑endian PCM samples.
+// Each `process()` call typically handles 128 frames (~5.3 ms at 24 kHz),
+// which keeps latency low enough for the Realtime API.
+//
+// The main thread attaches a message handler to `port.onmessage` to receive
+// the ArrayBuffer and forward it (e.g. via Socket.IO) to the backend.
+// ---------------------------------------------------------------------------
+/* eslint-disable no-undef */
+class InputPCMProcessor extends AudioWorkletProcessor {
+  process (inputs) {
+    const input = inputs[0]
+    if (!input || !input[0]) return true // no data yet
+
+    const float32 = input[0] // Float32Array of [-1..1]
+    const pcm = new Int16Array(float32.length)
+
+    // Convert float [-1,1] → int16
+    for (let i = 0; i < float32.length; i++) {
+      let s = float32[i] * 0x7fff
+      // clamp just in case
+      if (s > 0x7fff) s = 0x7fff
+      else if (s < -0x8000) s = -0x8000
+      pcm[i] = s
+    }
+
+    // Transfer the underlying buffer to main thread (zero‑copy)
+    this.port.postMessage(pcm.buffer, [pcm.buffer])
+    return true // keep processor alive
+  }
+}
+
+registerProcessor('input-pcm', InputPCMProcessor)
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\audio\input-pcm-processor.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\controls.js:
+// static/js/map/controls.js
+// ----------------------------
+//  • Renders "Day 1 / Day 2 / …" toggle checkboxes.
+//  • Each label's text colour is taken from getColourForDay(dayIndex + 1),
+//    so it will match the corresponding marker & route colour.
+// ----------------------------
+(function() {
+    if (!window.google || !window.google.maps) {
+        console.error('Google Maps API not fully loaded yet for controls.js - retrying...');
+        setTimeout(function() {
+            const script = document.createElement('script');
+            script.src = '/travel/static/js/map/controls.js';
+            document.head.appendChild(script);
+        }, 100);
+        return;
+    }
+
+// Store current visibility state globally
+window.currentDayVisibility = window.currentDayVisibility || {};
+
+// Track which days are visible
+let dayVisibility = {};
+
+/**
+ * Render day control checkboxes
+ *
+ * @param {Array<Object>} days
+ *   Each element is { label?: string, color?: string, stops: [...] }.
+ *   We will ignore `day.color` here, and instead use getColourForDay().
+ */
+function renderDayControls(days) {
+  const { debugLog } = window.TravelHelpers;
+  debugLog("Rendering day controls for", days.length, "days");
+
+  const controls = document.getElementById("day-controls");
+  if (!controls) {
+    debugLog("Day controls container not found");
+    return;
+  }
+
+  // Initialize visibility: restore previous state or default to Day 1 only
+  dayVisibility = window.currentDayVisibility || {};
+  if (Object.keys(dayVisibility).length === 0) {
+    days.forEach((_, index) => {
+      dayVisibility[index] = index === 0;
+    });
+  }
+  window.currentDayVisibility = dayVisibility;
+
+  controls.innerHTML = "";
+  controls.style.display = "flex";
+  controls.style.gap = "1rem";
+  controls.style.alignItems = "flex-start";
+
+  days.forEach((day, i) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.alignItems = "center";
+    wrapper.style.gap = "0.3rem";
+
+    // 1) Create the <label> for Day (i+1)
+    const label = document.createElement("label");
+
+    // Instead of using day.color, grab from our shared helper:
+    const colour = window.TravelGoogleMaps.getColourForDay(i + 1);
+
+    label.style.color = colour;          // e.g. "#FFADAD" for Day 1, "#FFD6A5" for Day 2, etc.
+    label.style.fontWeight = "bold";
+    label.style.fontSize = "0.9rem";
+    label.textContent = day.label || `Day ${i + 1}`;
+    label.style.cursor = "pointer";
+    label.setAttribute("for", `day-checkbox-${i}`);
+
+    // 2) Create the checkbox itself
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = `day-checkbox-${i}`;
+    checkbox.checked = dayVisibility[i] !== false;  // Use restored state
+    checkbox.style.cursor = "pointer";
+    checkbox.style.width = "18px";
+    checkbox.style.height = "18px";
+
+    // When toggled, this will show/hide markers & routes for this day
+    checkbox.onchange = () => toggleDay(i);
+
+    // 3) Assemble & append
+    wrapper.appendChild(label);
+    wrapper.appendChild(checkbox);
+    controls.appendChild(wrapper);
+  });
+
+  debugLog(`Created ${days.length} day control checkboxes`);
+}
+
+/**
+ * Toggle visibility for a specific day
+ *
+ * @param {number} dayIndex
+ *   Zero-based index (0 → Day 1, 1 → Day 2, etc.)
+ */
+function toggleDay(dayIndex) {
+  const { debugLog } = window.TravelHelpers;
+  const { toggleMarkersForDay } = window.TravelMarkers;
+  const { toggleRoutesForDay } = window.TravelRoutes;
+
+  debugLog(`Toggling day ${dayIndex + 1}`);
+
+  dayVisibility[dayIndex] = !dayVisibility[dayIndex];
+  
+  // Save state globally
+  window.currentDayVisibility = dayVisibility;
+
+  // Update markers and routes visibility
+  toggleMarkersForDay(dayIndex, dayVisibility[dayIndex]);
+  toggleRoutesForDay(dayIndex, dayVisibility[dayIndex]);
+}
+
+/**
+ * Get whether a given day is currently visible
+ *
+ * @param {number} dayIndex
+ *   Zero-based index of the day
+ * @returns {boolean}
+ */
+function isDayVisible(dayIndex) {
+  return dayVisibility[dayIndex] !== false;
+}
+
+/**
+ * Clear all day‐control checkboxes (for re‐rendering)
+ */
+function clearDayControls() {
+  const controls = document.getElementById("day-controls");
+  if (controls) {
+    controls.innerHTML = "";
+  }
+  // Don't clear visibility state here - we want to preserve it
+}
+
+// Export these functions for other modules to use
+window.TravelControls = {
+  renderDayControls,
+  toggleDay,
+  isDayVisible,
+  clearDayControls
+};
+})();
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\controls.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\google-maps.js:
+// static/js/map/google-maps.js
+// -------------------------------------------------------------
+//  PiText Travel – Google-Maps bootstrap + "always-on" attractions
+//  (with dynamic clusterer detection at use-time)
+// -------------------------------------------------------------
+
+/* ----------  DAY-COLOUR HELPER  ---------- */
+const DAY_COLOR_MAP = {
+  1: '#FFADAD', 2: '#FFD6A5', 3: '#FDFFB6',
+  4: '#FFC4E1', 5: '#FFCC99', 6: '#FFB3AB', 7: '#FFECB3'
+};
+function getColourForDay(dayIndex) {
+  if (DAY_COLOR_MAP[dayIndex]) return DAY_COLOR_MAP[dayIndex];
+  const hue = (dayIndex * 45) % 360;
+  return `hsl(${hue},70%,85%)`;
+}
+
+/* ----------  MAP / SERVICES  ---------- */
+let map, directionsService, isGoogleMapsLoaded = false;
+
+/* ----------  CLUSTERER DETECTION  ---------- */
+/** 
+ * At runtime, pick up whichever clusterer is loaded:
+ *  - window.MarkerClusterer   (legacy)
+ *  - google.maps.markerclusterer.MarkerClusterer (@googlemaps/markerclusterer)
+ */
+function getClustererCtor() {
+  if (window.MarkerClusterer) {
+    return window.MarkerClusterer;
+  }
+  if (window.google
+      && google.maps.markerclusterer
+      && google.maps.markerclusterer.MarkerClusterer) {
+    return google.maps.markerclusterer.MarkerClusterer;
+  }
+  return null;
+}
+
+/* ----------  TOURIST POI MARKERS  ---------- */
+let poiMarkers   = [];      // google.maps.Marker[]
+let poiClusterer = null;
+const CLUSTER_OPTIONS = {
+  imagePath : 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
+  maxZoom   : 11,   //  ≤ 11  → cluster   |   ≥ 12  → no cluster,   // ⬅️  stop clustering at zoom 13+
+  // Optional fine-tuning ↓
+  gridSize  : 50,   // cluster radius in px (smaller ⇒ fewer clusters)
+  minimumClusterSize : 4   // don't collapse 2-or-3 markers anymore
+};
+
+/** remove existing markers & clusters */
+function clearPoiMarkers() {
+  if (poiClusterer) poiClusterer.clearMarkers();
+  poiMarkers.forEach(m => m.setMap(null));
+  poiMarkers = [];
+}
+
+/* ----------  TOURIST POI FETCHER  ---------- */
+const TOURIST_TYPES = [
+  'tourist_attraction','museum','art_gallery','church','hindu_temple','synagogue',
+  'mosque','place_of_worship','park','zoo','aquarium','stadium','casino',
+  'amusement_park','campground','cemetery','library','city_hall','rv_park',
+  'university','point_of_interest'
+];
+const poiCache = new Map(); // key=`${type}_${lat}_${lng}_${zoom}`
+
+function splitBounds(bounds, segments = 3) {
+  const ne = bounds.getNorthEast(), sw = bounds.getSouthWest();
+  const latStep = (ne.lat() - sw.lat()) / segments;
+  const lngStep = (ne.lng() - sw.lng()) / segments;
+  const tiles = [];
+  for (let r = 0; r < segments; r++) {
+    for (let c = 0; c < segments; c++) {
+      const tileSw = new google.maps.LatLng(
+        sw.lat() + r * latStep, sw.lng() + c * lngStep
+      );
+      const tileNe = new google.maps.LatLng(
+        sw.lat() + (r + 1) * latStep, sw.lng() + (c + 1) * lngStep
+      );
+      tiles.push(new google.maps.LatLngBounds(tileSw, tileNe));
+    }
+  }
+  return tiles;
+}
+
+function fetchTouristPois() {
+  if (!map) return;
+  clearPoiMarkers();
+
+  const svc   = new google.maps.places.PlacesService(map);
+  const zoom  = map.getZoom();
+  const tiles = (zoom <= 14)
+    ? splitBounds(map.getBounds(), 3)
+    : [map.getBounds()];
+
+  tiles.forEach(bounds => {
+    TOURIST_TYPES.forEach(type => {
+      const key = `${type}_${bounds.getCenter().lat().toFixed(3)}_${bounds.getCenter().lng().toFixed(3)}_${zoom}`;
+      if (poiCache.has(key)) {
+        poiMarkers.push(...poiCache.get(key));
+        return;
+      }
+      svc.nearbySearch({ bounds, type }, (results, status) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !results) return;
+
+        const fresh = results.map(place => {
+          const iconUrl = place.icon
+            || 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png';
+          return new google.maps.Marker({
+            position: place.geometry.location,
+            icon:     { url: iconUrl, scaledSize: new google.maps.Size(22, 22) },
+            title:    place.name,
+            map
+          });
+        });
+
+        poiMarkers.push(...fresh);
+        poiCache.set(key, fresh);
+        if (poiClusterer) poiClusterer.repaint();
+      });
+    });
+  });
+
+  // now cluster, if a clusterer is loaded
+  const ClusterCtor = getClustererCtor();
+  if (ClusterCtor) {
+    if (!poiClusterer) {
+      poiClusterer = new ClusterCtor(map, poiMarkers, CLUSTER_OPTIONS);
+    } else {
+      poiClusterer.clearMarkers();
+      poiClusterer.addMarkers(poiMarkers, /* noDraw= */ true);
+    }
+  }
+}
+
+/* ----------  DEBOUNCE  ---------- */
+function debounce(fn, ms = 400) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+const debouncedFetchPois = debounce(fetchTouristPois, 500);
+
+/* ----------  MAIN INITIALIZATION  ---------- */
+function initializeGoogleMap() {
+  const { MAP_CONFIG, MAP_STYLES } = window.TravelConstants;
+  const el = document.getElementById('map');
+  
+  // Create the map
+// Create the map
+map = new google.maps.Map(el, {
+  center: MAP_CONFIG.DEFAULT_CENTER,
+  zoom: MAP_CONFIG.DEFAULT_ZOOM,
+  mapId: MAP_CONFIG.MAP_ID,
+  mapTypeControl: true,
+  zoomControl: true,
+  scaleControl: true,
+  streetViewControl: true,
+  fullscreenControl: true,
+  styles: MAP_STYLES  // Use styles from constants
+});  
+  // Initialize directions service
+  directionsService = new google.maps.DirectionsService();
+  
+  // Set up event listeners for POI loading
+  //map.addListener('bounds_changed', debouncedFetchPois);
+ // map.addListener('zoom_changed', debouncedFetchPois);
+  
+  // Load initial POIs
+ // google.maps.event.addListenerOnce(map, 'idle', fetchTouristPois);
+  
+  // Mark as loaded
+  isGoogleMapsLoaded = true;
+  
+  console.log('Google Maps initialized successfully');
+}
+
+/* ----------  FIT BOUNDS  ---------- */
+function fitMapToBounds(bounds, totalStops) {
+  const { MAP_CONFIG } = window.TravelConstants;
+  if (!bounds.isEmpty() && totalStops) {
+    map.fitBounds(bounds);
+    google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+      const z = map.getZoom();
+      if (z > MAP_CONFIG.MAX_ZOOM)     map.setZoom(MAP_CONFIG.COMFORTABLE_ZOOM);
+      else if (z < MAP_CONFIG.MIN_ZOOM) map.setZoom(MAP_CONFIG.OVERVIEW_ZOOM);
+    });
+  } else {
+    map.setCenter(MAP_CONFIG.DEFAULT_CENTER);
+    map.setZoom(  MAP_CONFIG.DEFAULT_ZOOM);
+  }
+}
+
+/* ----------  EXPORT  ---------- */
+window.TravelGoogleMaps = {
+  initializeGoogleMap,
+  getMap:               () => map,
+  getDirectionsService: () => directionsService,
+  isMapLoaded:          () => isGoogleMapsLoaded,
+  fitMapToBounds,
+  getColourForDay,
+  fetchTouristPois  
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\google-maps.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\markers.js:
+// static/js/map/markers.js
+// ---------------------------------------------------------
+//  • Uses official Google Places icons when available via
+//    `stop.iconUrl`; falls back to coloured circles.
+//  • getColourForDay(dayIndex) keeps per-day hues consistent.
+//  • Exposes window.showPOIs so other modules can drop
+//    ad-hoc points of interest onto the same map layer.
+// ---------------------------------------------------------
+
+(function() {
+    // Check if Google Maps API is loaded
+    if (!window.google || !window.google.maps || !window.google.maps.marker) {
+        console.error('Google Maps API not fully loaded yet for markers.js - retrying...');
+        setTimeout(function() {
+            // Retry loading this script
+            const script = document.createElement('script');
+            script.src = '/travel/static/js/map/markers.js';
+            document.head.appendChild(script);
+        }, 100);
+        return;
+    }
+
+    // ---------- Trip-stop markers ----------// ---------- Trip-stop markers ----------
+
+
+let currentMarkers = [];
+
+/**
+ * Create a marker for one itinerary stop (Advanced Markers API)
+ */
+// Make sure the object exists even if something later throws
+if (!window.TravelMarkers) window.TravelMarkers = {};
+
+function createMarker(stop, day, dayIndex, stopIndex) {
+  const { isValidCoordinate, createLatLng, debugLog } = window.TravelHelpers;
+  const { getMap, getColourForDay } = window.TravelGoogleMaps;
+  const { isDayVisible } = window.TravelControls;
+
+  if (!isValidCoordinate(stop.lat, stop.lng)) {
+    debugLog(`Skipping stop ${stop.name} – invalid coordinates`, stop);
+    return null;
+  }
+
+  const position = createLatLng(stop.lat, stop.lng);
+  const map      = getMap();
+
+  // Colour code for this day
+  const dayColor = getColourForDay(dayIndex);
+
+  const pinElement = new google.maps.marker.PinElement({
+    background: dayColor,
+    borderColor: '#FFFFFF',
+    glyphColor:  '#FFFFFF',
+    scale: 1.0
+  });
+  pinElement.element.style.opacity = '0.8';
+
+  const marker = new google.maps.marker.AdvancedMarkerElement({
+    position,
+    map: isDayVisible(dayIndex) ? map : null,
+    title: stop.name,
+    content: pinElement.element,
+    gmpClickable: true,
+    zIndex: -1000 - stopIndex
+  });
+
+  // InfoWindow
+  const placeTypeDisplay = stop.placeType
+      ? stop.placeType.replace(/_/g, ' ')
+      : 'attraction';
+
+  marker.infoWindow = new google.maps.InfoWindow({
+    content: `
+      <div class="info-window-content" style="
+        background:${dayColor};
+        border-radius:8px;
+        padding:12px;
+        box-shadow:0 2px 6px rgba(0,0,0,0.2);
+        min-width:200px;">
+        <h4 style="margin:0 0 8px 0;font-size:1.1rem;color:#222;">
+          ${stop.name}
+        </h4>
+        <p style="margin:4px 0;font-size:0.9rem;color:#444;">
+          ${day.label || `Day ${dayIndex + 1}`} • Stop ${stopIndex + 1} of ${day.stops.length}<br>
+          <small style="text-transform:capitalize;color:#666;">
+            ${placeTypeDisplay}
+          </small>
+        </p>
+      </div>`
+  });
+
+  marker.addListener('click', () => {
+    closeAllInfoWindows();
+    marker.infoWindow.open(map, marker);
+  });
+
+  marker.dayIndex = dayIndex;
+  return marker;
+}
+
+/**
+ * Build all itinerary markers and return viewport bounds
+ */
+function createAllMarkers(tripData) {
+  const { debugLog } = window.TravelHelpers;
+  const bounds = new google.maps.LatLngBounds();
+  let totalStops = 0;
+
+  clearAllMarkers();
+
+  tripData.days.forEach((day, dayIndex) => {
+    debugLog(`Processing day ${dayIndex + 1}: ${day.label}`, day);
+    if (!Array.isArray(day.stops)) {
+      debugLog(`Day ${dayIndex + 1} has no stops`);
+      return;
+    }
+
+    day.stops.forEach((stop, stopIndex) => {
+      const marker = createMarker(stop, day, dayIndex, stopIndex);
+      if (marker) {
+        currentMarkers.push(marker);
+        bounds.extend(marker.position);
+        totalStops += 1;
+      }
+    });
+  });
+
+  debugLog(`Created ${currentMarkers.length} markers for ${totalStops} stops`);
+  return { bounds, totalStops };
+}
+
+function clearAllMarkers() {
+  currentMarkers.forEach(m => {
+    m.infoWindow?.close();
+    m.map = null;
+  });
+  currentMarkers = [];
+}
+
+function closeAllInfoWindows() {
+  currentMarkers.forEach(m => m.infoWindow?.close());
+}
+
+function toggleMarkersForDay(dayIndex, visible) {
+  const { getMap } = window.TravelGoogleMaps;
+  currentMarkers.forEach(m => {
+    if (m.dayIndex === dayIndex) {
+      m.map = visible ? getMap() : null;
+      if (!visible) m.infoWindow?.close();
+    }
+  });
+}
+
+function getAllMarkers() {
+  return currentMarkers;
+}
+
+// ---------- “Ad-hoc” POI markers for voice chat ----------
+
+let poiMarkers = [];
+
+/**
+ * Drop an arbitrary list of POIs on the map (clears previous POI layer)
+ * list = [ {name, lat, lng}, … ]
+ */
+function showPOIs(list) {
+  const { getMap } = window.TravelGoogleMaps;
+  const map = getMap();
+
+  // clear previous batch
+  poiMarkers.forEach(m => m.setMap(null));
+  poiMarkers = [];
+
+  list.forEach(({ name, lat, lng }) => {
+    const marker = new google.maps.Marker({
+      position: { lat, lng },
+      title: name,
+      map,
+      icon: {
+        url: '/travel/static/img/poi.svg',
+        scaledSize: new google.maps.Size(28, 28)
+      }
+    });
+    poiMarkers.push(marker);
+  });
+}
+
+// ---------- Exports ----------
+
+Object.assign(window.TravelMarkers, {
+  createMarker,
+  createAllMarkers,
+  clearAllMarkers,
+  closeAllInfoWindows,
+  toggleMarkersForDay,
+  getAllMarkers,
+  showPOIs
+});
+
+// quick global handles for modules that don’t import TravelMarkers
+window.showPOIs = showPOIs;
+})();
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\markers.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\routes.js:
+// static/js/map/routes.js
+// -------------------------------------------------------------
+//  • Draws a walking route (Directions API) or, if that fails,
+//    a simple geodesic Polyline for each day.
+//  • Keeps a per-day colour in sync with marker colours.
+//  • Adds drawRoute(encodedPolyline[, day]) so voice-chat
+//    can drop a ready-made route on the map in one call.
+// -------------------------------------------------------------
+
+(function() {
+    if (!window.google || !window.google.maps) {
+        console.error('Google Maps API not fully loaded yet for routes.js - retrying...');
+        setTimeout(function() {
+            const script = document.createElement('script');
+            script.src = '/travel/static/js/map/routes.js';
+            document.head.appendChild(script);
+        }, 100);
+        return;
+    }
+
+// ---------- internal state ----------
+
+// collection of DirectionsRenderers *and* fallback Polylines
+let currentPaths = [];
+
+/** Return the same colour the markers use for this day (0-based index). */
+function getRouteColour(dayIndex) {
+  return window.TravelGoogleMaps.getColourForDay(dayIndex + 1);
+}
+
+// ---------- main “create all” entry point ----------
+
+/**
+ * Build routes for every day in a trip data object.
+ * tripData = { days:[ {label, stops:[{name,lat,lng}, …]}, … ] }
+ */
+function createAllRoutes(tripData) {
+  const { debugLog } = window.TravelHelpers;
+
+  debugLog('Creating routes for all days …');
+  clearAllRoutes();
+
+  tripData.days.forEach((day, dayIndex) => {
+    if (Array.isArray(day.stops) && day.stops.length > 1) {
+      createDayRoute(day, dayIndex);
+    }
+  });
+}
+
+// ---------- one-day route builder ----------
+
+function createDayRoute(day, dayIndex) {
+  const {
+    debugLog,
+    isValidCoordinate,
+    createLatLng
+  } = window.TravelHelpers;
+  const {
+    getMap,
+    getDirectionsService
+  } = window.TravelGoogleMaps;
+  const { TRAVEL_MODE } = window.TravelConstants;
+  const { isDayVisible } = window.TravelControls;
+
+  debugLog(`Creating route for Day ${dayIndex + 1} (“${day.label || ''}”)`);
+
+  const validStops = (day.stops || []).filter(s =>
+    isValidCoordinate(s.lat, s.lng)
+  );
+  if (validStops.length < 2) {
+    debugLog(`  Day ${dayIndex + 1} has <2 valid stops → no route.`);
+    return;
+  }
+
+  // Directions-API request
+  const origin      = createLatLng(validStops[0].lat, validStops[0].lng);
+  const destination = createLatLng(
+    validStops[validStops.length - 1].lat,
+    validStops[validStops.length - 1].lng
+  );
+  const waypoints = validStops.slice(1, -1).map(s => ({
+    location: createLatLng(s.lat, s.lng),
+    stopover: true
+  }));
+
+  const request = {
+    origin,
+    destination,
+    waypoints,
+    travelMode: TRAVEL_MODE.WALKING,
+    optimizeWaypoints: false,
+    avoidHighways: true,
+    avoidTolls: true
+  };
+
+  const directionsService = getDirectionsService();
+  const map          = getMap();
+  const routeColour  = getRouteColour(dayIndex);
+
+  directionsService.route(request, (result, status) => {
+    debugLog(
+      `  Directions API response for Day ${dayIndex + 1}: ${status}`
+    );
+
+    if (status === 'OK' && result) {
+      // use DirectionsRenderer
+      const renderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: routeColour,
+          strokeWeight: 4,
+          strokeOpacity: 0.8
+        },
+        suppressInfoWindows: true
+      });
+
+      renderer.setDirections(result);
+      renderer.dayIndex = dayIndex;
+      renderer.setMap(isDayVisible(dayIndex) ? map : null);
+
+      currentPaths.push(renderer);
+    } else {
+      // fallback
+      debugLog(
+        `  Directions failed (${status}); using fallback polyline.`
+      );
+      createSimplePolyline(validStops, dayIndex);
+    }
+  });
+}
+
+// ---------- fallback polyline ----------
+
+function createSimplePolyline(stops, dayIndex) {
+  const { debugLog, createLatLng } = window.TravelHelpers;
+  const { getMap }                 = window.TravelGoogleMaps;
+  const { isDayVisible }           = window.TravelControls;
+
+  debugLog(`  Drawing fallback polyline for Day ${dayIndex + 1}`);
+
+  const pathCoords  = stops.map(s => createLatLng(s.lat, s.lng));
+  const routeColour = getRouteColour(dayIndex);
+  const map         = getMap();
+
+  const polyline = new google.maps.Polyline({
+    path: pathCoords,
+    geodesic: true,
+    strokeColor: routeColour,
+    strokeOpacity: 0.8,
+    strokeWeight: 4
+  });
+
+  polyline.dayIndex = dayIndex;
+  polyline.setMap(isDayVisible(dayIndex) ? map : null);
+
+  currentPaths.push(polyline);
+}
+
+// ---------- utilities ----------
+
+function clearAllRoutes() {
+  currentPaths.forEach(p => p.setMap?.(null));
+  currentPaths = [];
+}
+
+function toggleRoutesForDay(dayIndex, visible) {
+  const { debugLog } = window.TravelHelpers;
+  const { getMap }   = window.TravelGoogleMaps;
+
+  debugLog(
+    `Toggling routes for Day ${dayIndex + 1} → ${visible ? 'show' : 'hide'}`
+  );
+
+  currentPaths.forEach(p => {
+    if (p.dayIndex === dayIndex) {
+      p.setMap(visible ? getMap() : null);
+    }
+  });
+}
+
+// ---------- “voice chat” helper ----------
+//
+// drawRoute(encodedPolyline[, dayIndex = 0])
+// ------------------------------------------------
+// Called by chat.js when the back-end returns an
+// already-computed polyline.
+
+const dayLayers = []; // one Polyline per day
+
+function drawRoute(encoded, day = 0) {
+  const map = window.TravelGoogleMaps.getMap();
+
+  // remove old layer for that day, if any
+  if (dayLayers[day]) dayLayers[day].setMap(null);
+
+  const path = google.maps.geometry.encoding.decodePath(encoded);
+  const line = new google.maps.Polyline({
+    path,
+    strokeOpacity: 0.9,
+    strokeWeight: 4,
+    geodesic: true,
+    map
+  });
+
+  dayLayers[day] = line;
+
+  // fit viewport
+  const bounds = new google.maps.LatLngBounds();
+  path.forEach(p => bounds.extend(p));
+  map.fitBounds(bounds, 80);
+}
+
+// ---------- export to global namespace ----------
+
+window.TravelRoutes = {
+  createAllRoutes,
+  createDayRoute,
+  clearAllRoutes,
+  toggleRoutesForDay
+};
+
+// Make the quick helper globally reachable (e.g. from chat.js)
+window.drawRoute = drawRoute;
+})();
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\map\routes.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\ui\form.js:
+// static/js/ui/form.js - Form Handling
+
+/**
+ * Initialize form event handlers
+ */
+function initializeForm() {
+    const { debugLog } = window.TravelHelpers;
+    const form = document.getElementById("trip-form");
+    
+    if (form) {
+        form.addEventListener("submit", handleFormSubmit);
+        debugLog("Form handler initialized");
+    }
+}
+
+/**
+ * Handle form submission
+ */
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const { debugLog } = window.TravelHelpers;
+    const { showError } = window.TravelOverlays;
+    const { processItinerary } = window.TravelApp;
+    
+    const city = document.getElementById("city").value.trim();
+    const days = parseInt(document.getElementById("days").value, 10);
+    
+    debugLog(`Planning trip: ${city}, ${days} days`);
+    
+    if (city && days > 0) {
+        try {
+            await processItinerary(city, days);
+        } catch (error) {
+            showError(`Failed to process itinerary: ${error.message}`);
+        }
+    } else {
+        showError("Please enter a valid city name and number of days");
+    }
+}
+
+// Export for other modules
+window.TravelForm = {
+    initializeForm
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\ui\form.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\ui\overlays.js:
+// static/js/ui/overlays.js - Loading and Error Overlays
+
+/**
+ * Show loading overlay on top of the map
+ */
+function showLoading(message) {
+    const { ensureRelativePosition } = window.TravelHelpers;
+    const mapElement = document.getElementById("map");
+    if (!mapElement) return;
+    ensureRelativePosition(mapElement);
+
+    let overlay = document.getElementById("map-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "map-overlay";
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            color: #f2f2f2;
+            font-size: 1.1rem;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        `;
+        mapElement.appendChild(overlay);
+    }
+    
+    overlay.innerHTML = `
+        <p style="margin: 0 0 0.5rem;">🔄 ${message}</p>
+        <p><small>This may take a few moments…</small></p>
+    `;
+    overlay.classList.add("visible");
+}
+
+/**
+ * Show error overlay on top of the map
+ */
+function showError(message) {
+    const { ensureRelativePosition, errorLog } = window.TravelHelpers;
+    errorLog("Showing error:", message);
+    
+    const mapElement = document.getElementById("map");
+    if (!mapElement) return;
+    ensureRelativePosition(mapElement);
+
+    let overlay = document.getElementById("map-overlay");
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "map-overlay";
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9);
+            color: #c0392b;
+            font-size: 1.1rem;
+            text-align: center;
+            z-index: 5;
+            pointer-events: auto;
+            transition: opacity 0.2s ease;
+        `;
+        mapElement.appendChild(overlay);
+    } else {
+        // If overlay existed from showLoading, override styling
+        overlay.style.background = "rgba(255, 255, 255, 0.9)";
+        overlay.style.color = "#c0392b";
+        overlay.style.pointerEvents = "auto";
+    }
+
+    overlay.innerHTML = `
+        <h3 style="margin-top: 0;">⚠️ Error</h3>
+        <div style="max-width: 500px; text-align: left; margin: 0 auto;">
+            ${message}
+        </div>
+        <button onclick="location.reload()"
+                style="margin-top: 1rem;
+                       padding: 0.4rem 1rem;
+                       background: #007bff;
+                       color: white;
+                       border: none;
+                       border-radius: 4px;
+                       cursor: pointer;">
+            Reload
+        </button>
+    `;
+    overlay.classList.add("visible");
+}
+
+/**
+ * Hide any loading/error overlay
+ */
+function hideOverlay() {
+    const el = document.getElementById("map-overlay");
+    if (el) {
+        el.classList.remove("visible");
+        el.innerHTML = "";
+    }
+}
+
+// Export for other modules
+window.TravelOverlays = {
+    showLoading,
+    showError,
+    hideOverlay
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\ui\overlays.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\ui\panel.js:
+// static/js/ui/panel.js  – Minimise / expand logic
+// -------------------------------------------------
+// • Adds / removes the class "minimized" on #panel.
+// • CSS in panel.css already hides the form inputs and
+//   keeps only the Day-controls row visible in that state.
+
+function initializePanel() {
+  const panel       = document.getElementById('panel');
+  const minimizeBtn = document.getElementById('minimize-btn');
+
+  // defensive – if markup missing, bail early
+  if (!panel || !minimizeBtn) return;
+
+  let isMinimized = false;
+
+  minimizeBtn.addEventListener('click', () => {
+    isMinimized = !isMinimized;
+
+    // ↓ this is the only class the CSS cares about
+    panel.classList.toggle('minimized', isMinimized);
+
+    // update button glyph & tooltip
+    minimizeBtn.textContent = isMinimized ? '+' : '−';
+    minimizeBtn.title       = isMinimized ? 'Expand' : 'Minimize';
+  });
+}
+
+// expose for main app bootstrap
+window.TravelPanel = { initializePanel };
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\ui\panel.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\utils\constants.js:
+// static/js/utils/constants.js – Shared constants (vector-map ready)
+// -----------------------------------------------------------------
+
+// 1) Map configuration
+const MAP_CONFIG = {
+  DEFAULT_CENTER   : { lat: 48.8566, lng: 2.3522 },
+  DEFAULT_ZOOM     : 13,
+  MAX_ZOOM         : 16,
+  MIN_ZOOM         : 10,
+  COMFORTABLE_ZOOM : 14,
+  OVERVIEW_ZOOM    : 12,
+  
+  // Comment out or remove the MAP_ID
+  MAP_ID: 'c3bdabd61cc122adbb5aee9d'
+};
+
+// 2) Travel mode
+const TRAVEL_MODE = { WALKING: 'WALKING' };
+
+// 3) UI colours
+const COLORS = {
+  DEFAULT_ROUTE : '#4285f4',
+  DAY_COLORS    : [
+    '#ff6b6b', '#4ecdc4', '#45b7d1',
+    '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'
+  ]
+};
+
+// 4) API endpoints
+const API_ENDPOINTS = {
+  CONFIG   : '/travel/api/config',
+  ITINERARY: '/travel/api/itinerary'
+};
+
+// 5) Comprehensive map styles - hide only road labels, keep everything else
+const MAP_STYLES = [
+  /* ----- POI visibility ----- */
+  // Hide ALL POI text labels
+  {
+    featureType: 'poi',
+    elementType: 'labels.text',
+    stylers: [{ visibility: 'off' }]
+  },
+  // Show POI icons (museums, parks, attractions, etc.)
+  {
+    featureType: 'poi',
+    elementType: 'labels.icon',
+    stylers: [{ visibility: 'on' }]
+  },
+  // … except for generic businesses, which we still hide:
+  {
+    featureType: 'poi.business',
+    elementType: 'labels.icon',
+    stylers: [{ visibility: 'off' }]
+  },
+
+  /* ----- Road / transit / neighbourhood clutter ----- */
+  { featureType: 'road.local',           elementType: 'labels',       stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.arterial',        elementType: 'labels.text',  stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.highway',         elementType: 'labels.icon',  stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.arterial',        elementType: 'labels.icon',  stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.local',           elementType: 'labels.icon',  stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit',              elementType: 'labels',       stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.neighborhood', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+
+  /* ----- Subtle visual tweaks ----- */
+  { elementType: 'labels.text.fill',   stylers: [{ lightness: 35 }] },
+  { elementType: 'labels.text.stroke', stylers: [{ visibility: 'on' }, { lightness: 65 }] },
+  { elementType: 'geometry',           stylers: [{ lightness: 10 }] }
+];
+// 6) Export everything
+window.TravelConstants = {
+  MAP_CONFIG,
+  TRAVEL_MODE,
+  COLORS,
+  API_ENDPOINTS,
+  MAP_STYLES
+};
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\utils\constants.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\utils\helpers.js:
+// static/js/utils/helpers.js - Utility Functions
+
+/**
+ * Ensure an element has relative positioning for overlays
+ */
+function ensureRelativePosition(el) {
+    const pos = getComputedStyle(el).position;
+    if (pos === 'static' || !pos) {
+        el.style.position = 'relative';
+    }
+}
+
+/**
+ * Validate coordinates
+ */
+function isValidCoordinate(lat, lng) {
+    return lat && lng && !isNaN(lat) && !isNaN(lng) && 
+           lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+/**
+ * Create a Google Maps LatLng object
+ */
+function createLatLng(lat, lng) {
+    return { lat: Number(lat), lng: Number(lng) };
+}
+
+/**
+ * Debug logging helper
+ */
+function debugLog(message, data = null) {
+    if (console && console.log) {
+        if (data) {
+            console.log(message, data);
+        } else {
+            console.log(message);
+        }
+    }
+}
+
+/**
+ * Error logging helper
+ */
+function errorLog(message, error = null) {
+    if (console && console.error) {
+        if (error) {
+            console.error(message, error);
+        } else {
+            console.error(message);
+        }
+    }
+}
+
+/**
+ * Create a promise that resolves after a delay
+ */
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Export for other modules
+window.TravelHelpers = {
+    ensureRelativePosition,
+    isValidCoordinate,
+    createLatLng,
+    debugLog,
+    errorLog,
+    delay
+};
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\utils\helpers.js ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\utils\temp.txt:
+
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\static\js\utils\temp.txt ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\templates\calendar.html:
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PiText - Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="/travel/static/PiText_favicon.ico" />
+
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="/travel/static/css/base.css" />
+  <link rel="stylesheet" href="/travel/static/css/calendar.css"/>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📅 Calendar</h1>
+    </header>
+
+    <main>
+      <!-- Calendar Container -->
+      <div id="calendar"></div>
+      
+      <!-- Test Controls -->
+      <div class="test-controls">
+        <h3>Test Controls</h3>
+        <button onclick="testCreateEvent()">Create Test Event</button>
+        <button onclick="testRefresh()">Refresh Calendar</button>
+        <button onclick="testNavigate()">Go to Today</button>
+        <button onclick="testChangeView()">Switch to Week View</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- FullCalendar Library -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+  <!-- Calendar Integration -->
+  <script src="/travel/static/js/calendar/index.js"></script>
+
+  <!-- Test Functions -->
+  <script>
+    function testCreateEvent() {
+      if (window.piTextCalendar) {
+        const testEvent = {
+          title: 'Test Event',
+          start_time: new Date().toISOString(),
+          end_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          location: 'Test Location',
+          description: 'This is a test event created from the test controls.',
+          type: 'activity'
+        };
+        
+        window.piTextCalendar.createEvent(testEvent)
+          .then(result => {
+            console.log('Test event created:', result);
+            alert('Test event created successfully!');
+          })
+          .catch(error => {
+            console.error('Failed to create test event:', error);
+            alert('Failed to create test event: ' + error.message);
+          });
+      } else {
+        alert('Calendar not initialized yet');
+      }
+    }
+
+    function testRefresh() {
+      if (window.piTextCalendar) {
+        window.piTextCalendar.refresh()
+          .then(() => {
+            console.log('Calendar refreshed');
+            alert('Calendar refreshed successfully!');
+          })
+          .catch(error => {
+            console.error('Failed to refresh calendar:', error);
+            alert('Failed to refresh calendar: ' + error.message);
+          });
+      } else {
+        alert('Calendar not initialized yet');
+      }
+    }
+
+    function testNavigate() {
+      if (window.piTextCalendar) {
+        window.piTextCalendar.navigateToDate(new Date());
+        console.log('Navigated to today');
+        alert('Navigated to today!');
+      } else {
+        alert('Calendar not initialized yet');
+      }
+    }
+
+    function testChangeView() {
+      if (window.piTextCalendar) {
+        const currentView = window.piTextCalendar.getCalendar().view.type;
+        const newView = currentView === 'timeGridWeek' ? 'dayGridMonth' : 'timeGridWeek';
+        window.piTextCalendar.changeView(newView);
+        console.log('Changed view to:', newView);
+        alert('Changed view to ' + newView + '!');
+      } else {
+        alert('Calendar not initialized yet');
+      }
+    }
+
+    // Listen for calendar ready event
+    window.addEventListener('calendarReady', function(event) {
+      console.log('Calendar is ready:', event.detail);
+      document.querySelector('.test-controls').style.display = 'block';
+    });
+  </script>
+
+  <style>
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+
+    .test-controls {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .test-controls h3 {
+      margin-top: 0;
+      color: #495057;
+    }
+
+    .test-controls button {
+      margin: 5px;
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .test-controls button:hover {
+      background: #5a67d8;
+      transform: translateY(-1px);
+    }
+  </style>
+</body>
+</html> 
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\templates\calendar.html ---
+
+C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\templates\map.html:
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PiText - Travel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="/travel/static/PiText_favicon.ico" />
+
+  <!-- CSS Files -->
+  <link rel="stylesheet" href="/travel/static/css/base.css" />
+  <link rel="stylesheet" href="/travel/static/css/map.css" />
+  <link rel="stylesheet" href="/travel/static/css/controls.css" />
+  <link rel="stylesheet" href="/travel/static/css/panel.css" />
+  <link rel="stylesheet" href="/travel/static/css/chat.css"/>
+  <link rel="stylesheet" href="/travel/static/css/calendar.css"/>
+</head>
+<body>
+  <!-- Full-Screen Map Container -->
+  <div id="map">
+    <!-- Initial "Ready" message -->
+    <div class="loading">
+      <p>🗺️ Ready to plan your trip?</p>
+      <p><small>Enter a city &amp; days, then click "Start Planning".</small></p>
+    </div>
+  </div>
+  <!-- Voice-chat mic button -->
+<button id="mic-btn" class="mic-btn" aria-label="Start voice chat">
+
+  <!-- Sliding chat panel -->
+  <aside id="chat-panel" class="chat-panel" aria-live="polite"></aside>
+
+  <!-- simple SVG icon keeps it self-contained -->
+  <svg viewBox="0 0 24 24" width="24" height="24">
+    <path d="M12 2a4 4 0 0 1 4 4v6a4 4 0 1 1-8 0V6a4 4 0 0 1 4-4zM5 11h2a5 5 0 0 0 10 0h2a7 7 0 0 1-14 0zm7 9v-3h-2v3H8v2h8v-2h-4z"/>
+  </svg>
+</button>
+
+
+  <!-- Transparent Outer Panel -->
+  <div id="panel" class="hexagon-interface">
+    <button id="minimize-btn" title="Minimize/Expand">−</button>
+    <!-- Inner Panel: blur  white background  rounding -->
+    <div id="inner-panel">
+    <div id="day-controls"></div>
+
+      <form id="trip-form">
+        <input id="city" type="text" placeholder="Enter city name" value="City" required />
+        <input id="days" type="number" min="1" max="14" value="3" required />
+        <button type="submit">Start Planning</button>
+      </form>
+
+      <!-- Calendar Integration -->
+      <div class="calendar-panel">
+        <div class="calendar-header">
+          <h2>📅 Trip Calendar</h2>
+          <button class="calendar-toggle" onclick="toggleCalendar()">Show Calendar</button>
+        </div>
+        <div class="calendar-content" id="calendar-content">
+          <div id="calendar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Loading / Error Overlay (injected by JS) -->
+  <div id="map-overlay"></div>
+
+  <!-- JavaScript Files - Load in dependency order -->
+  <!-- Utilities first -->
+  <script src="/travel/static/js/utils/constants.js"></script>
+  <script src="/travel/static/js/utils/helpers.js"></script>
+  
+  <!-- API Layer -->
+  <script src="/travel/static/js/api/config.js"></script>
+  <script src="/travel/static/js/api/client.js"></script>
+  
+  <!-- UI Components -->
+  <script src="/travel/static/js/ui/overlays.js"></script>
+  <script src="/travel/static/js/ui/panel.js"></script>
+  <script src="/travel/static/js/ui/form.js"></script>
+  
+<!-- Map components (must stay in this order) -->
+<!-- Map components (must stay in this order) -->
+<!-- Map components (must stay in this order) -->
+<script src="/travel/static/js/map/google-maps.js"></script>
+
+<!-- Dynamically load map modules after Google Maps is ready -->
+<script>
+window.mapModulesLoaded = false;
+window.mapModulesReady = false;
+
+window.loadMapModules = function() {
+    if (window.mapModulesLoaded) return;
+    
+    // Ensure Google Maps is fully ready
+    if (!window.google || !window.google.maps || !window.google.maps.marker) {
+        console.log('Waiting for Google Maps to be fully ready...');
+        setTimeout(window.loadMapModules, 100);
+        return;
+    }
+    
+    const scripts = [
+        '/travel/static/js/map/markers.js',
+        '/travel/static/js/map/routes.js', 
+        '/travel/static/js/map/controls.js'
+    ];
+    
+    let loadedCount = 0;
+    
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+    
+    // Load scripts sequentially to ensure proper order
+    Promise.all(scripts.map(loadScript))
+        .then(() => {
+            window.mapModulesLoaded = true;
+            window.mapModulesReady = true;
+            console.log('All map modules loaded successfully');
+            
+            // Trigger any pending renders
+            if (window.pendingRender) {
+                window.TravelApp.renderTripOnMap(window.pendingRender);
+                window.pendingRender = null;
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load map modules:', err);
+        });
+};
+</script>
+<!-- Marker-clusterer library -->
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<!-- FullCalendar Library -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
+<!-- Voice/chat helpers -->
+<script src="/travel/static/js/voice.js"></script>
+<script src="/travel/static/js/chat.js"></script>
+
+<!-- Calendar Integration -->
+<script src="/travel/static/js/calendar/index.js"></script>
+
+<!-- Main app (calls renderTripOnMap) – must be last, NO DEFER -->
+<script src="/travel/static/js/app.js"></script>
+
+<!-- Calendar Toggle Function -->
+<script>
+function toggleCalendar() {
+    const content = document.getElementById('calendar-content');
+    const toggle = document.querySelector('.calendar-toggle');
+    
+    if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        toggle.textContent = 'Show Calendar';
+    } else {
+        content.classList.add('active');
+        toggle.textContent = 'Hide Calendar';
+        
+        // Initialize calendar if not already done
+        if (window.piTextCalendar && !window.piTextCalendar.initialized) {
+            window.piTextCalendar.init();
+        }
+    }
+}
+</script>
+
+</body>
+</html>
+--- End of C:\Users\prabh\OneDrive\Documents\GitHub\pitext-root\pitext_travel\templates\map.html ---
+

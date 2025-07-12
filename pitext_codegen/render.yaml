@@ -1,0 +1,17 @@
+services:
+
+* type: web
+  name: pitext-codegen
+  env: python
+  buildCommand: |
+  pip install -r requirements.txt
+  startCommand: |
+  python -m pitext\_codegen.main
+  plan: free
+  envVars:
+
+  * key: OPENAI\_API\_KEY
+    sync: false  # set via Render dashboard
+  * key: PYTHONUNBUFFERED
+    value: "1"
+    autoDeploy: true

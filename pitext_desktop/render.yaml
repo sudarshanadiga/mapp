@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: PiText-Router
+    runtime: python
+    buildCommand: |
+      echo "=== Project structure ==="
+      ls -la
+      echo "=== Installing dependencies ==="
+      pip install -r requirements.txt
+      echo "=== Installing desktop dependencies ==="
+      cd pitext-desktop && pip install -r requirements.txt && cd ..
+      echo "=== Installing mobile dependencies ==="
+      cd pitext-mobile && pip install -r requirements.txt && cd ..
+      echo "=== Installing router dependencies ==="
+      cd router-backend && pip install -r requirements.txt && cd ..
+      echo "=== Installing playwright ==="
+      playwright install chromium --with-deps
+      echo "=== Making start script executable ==="
+      chmod +x start.sh
+      echo "=== Final structure check ==="
+      ls -la
+      ls -la pitext-desktop/
+      ls -la pitext-mobile/
+      ls -la router-backend/
+  startCommand: uvicorn pitext_desktop.main:create_app --host 0.0.0.0 --port 8000 --log-level debug
+
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RENDER_MODE
+        value: html

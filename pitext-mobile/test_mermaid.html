@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mermaid Test</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.esm.min.mjs';
+    
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      securityLevel: 'loose'
+    });
+    
+    async function testMermaid() {
+      const testCode = `flowchart TD
+    A[Start] --> B[Process]
+    B --> C[End]`;
+      
+      console.log('Testing Mermaid with code:', testCode);
+      
+      try {
+        const { svg } = await mermaid.render('test-diagram', testCode);
+        document.getElementById('result').innerHTML = svg;
+        console.log('✅ Mermaid test successful');
+      } catch (error) {
+        console.error('❌ Mermaid test failed:', error);
+        document.getElementById('result').innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+      }
+    }
+    
+    testMermaid();
+  </script>
+</head>
+<body>
+  <h1>Mermaid Test</h1>
+  <div id="result"></div>
+</body>
+</html> 

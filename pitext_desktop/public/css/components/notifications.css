@@ -1,0 +1,83 @@
+/* public/css/components/notifications.css */
+
+/* ============================================
+   Notifications
+   ============================================ */
+.notification-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.notification {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 300px;
+  transform: translateX(400px);
+  transition: transform var(--transition-normal);
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.notification-show {
+  transform: translateX(0);
+}
+
+.notification-icon {
+  font-size: 1.25rem;
+}
+
+.notification-success {
+  border-color: var(--success-color);
+}
+
+.notification-success .notification-icon {
+  color: var(--success-color);
+}
+
+.notification-error {
+  border-color: var(--error-color);
+}
+
+.notification-error .notification-icon {
+  color: var(--error-color);
+}
+
+.notification-warning {
+  border-color: var(--warning-color);
+}
+
+.notification-warning .notification-icon {
+  color: var(--warning-color);
+}
+
+.notification-info {
+  border-color: var(--info-color);
+}
+
+.notification-info .notification-icon {
+  color: var(--info-color);
+}
+
+.notification-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.notification-close:hover {
+  opacity: 1;
+}
