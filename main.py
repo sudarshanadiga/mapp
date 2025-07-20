@@ -2,9 +2,16 @@
 import sys
 import importlib.util
 from pathlib import Path
+import logging
 
+
+logger = logging.getLogger(__name__)
+
+
+logger.info("Shri Lakshmi Anantha Padmanabha")
 # Get the path to router_app.py
 router_app_path = Path(__file__).parent / 'router-backend' / 'router_app.py'
+
 
 # Load the module dynamically
 spec = importlib.util.spec_from_file_location("router_app", router_app_path)
