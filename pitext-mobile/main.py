@@ -18,6 +18,7 @@ from pydantic import BaseModel
 # Set up logger
 logger = logging.getLogger(__name__)
 
+logger.info("Shri Lakshmi Anantha Padmanabha")
 # Configuration
 class Config:
     def __init__(self):
