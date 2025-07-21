@@ -48,6 +48,7 @@ async def describe(request: DescribeRequest):
 
         # Log the final diagram code being sent to client
         diagram_code = result.get("diagram", "")
+        logger.info("Shri Lakshmi Anantha Padmanabha")
         logger.info("📤 Final Mermaid code being sent to client for '%s':\n%s", 
                     request.query[:50], diagram_code)
 
