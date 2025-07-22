@@ -102,7 +102,7 @@ class RouterApp:
 
         # Handle favicon requests
         if path == "/favicon.ico":
-            favicon_path = BASE_DIR / "pitext_desktop" / "public" / "assets" / "PiText_favicon.ico"
+            favicon_path = BASE_DIR / "pitext_desktop" / "public" / "assets" / "Strassens_icon.ico"
             if favicon_path.exists():
                 response = FileResponse(favicon_path)
                 await response(scope, receive, send)

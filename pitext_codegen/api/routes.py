@@ -150,9 +150,9 @@ def setup_static_routes(app: FastAPI):
         return FileResponse(index_path)
     
     # Serve favicon if it exists
-    favicon_path = public_dir / "PiText_favicon.ico"
+    favicon_path = public_dir / "Strassens_icon.ico"
     if favicon_path.exists():
-        @app.get(f"{config.API_PREFIX}/PiText_favicon.ico", include_in_schema=False)
+        @app.get(f"{config.API_PREFIX}/Strassens_icon.ico", include_in_schema=False)
         async def favicon():
             return FileResponse(favicon_path)
     
