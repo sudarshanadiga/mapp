@@ -1,89 +1,949 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Strassens</title>
-  
-  <link rel="icon" href="/desktop/assets/Strassens_icon.ico" type="image/x-icon"/>
-  <link rel="apple-touch-icon" href="/desktop/assets/Strassens_icon.ico">
-  
-  <link rel="stylesheet" href="/desktop/css/styles.css">
-  
-  <link rel="preload" href="/desktop/assets/PiText_background.png" as="image">
-  
-  <script type="module">
-    // Import Mermaid but don't initialize - our app will handle it
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-    window.mermaid = mermaid;
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="msapplication-TileColor" content="#0a0a0a">
+    <title>Yutori - AI agents for everyday life</title>
+    <link rel="icon" href="/desktop/assets/Strassens_icon.ico" type="image/x-icon"/>
+    <link rel="apple-touch-icon" href="/desktop/assets/Strassens_icon.ico">
+    <link rel="preload" href="/desktop/assets/PiText_background.png" as="image">
+    <script type="module">
+        // Import Mermaid but don't initialize - our app will handle it
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        window.mermaid = mermaid;
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0a0a0a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-color: #2563eb;
+            --max-width: 1000px;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--text-primary);
+        }
+
+        .waitlist-btn {
+            background: var(--accent-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .waitlist-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        /* Section visibility */
+        section {
+            display: none;
+        }
+
+        section.active {
+            display: block;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 0 80px;
+            position: relative;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 800px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 8vw, 72px);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -2px;
+            background: linear-gradient(to right, #ffffff, #808080);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(18px, 3vw, 24px);
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        /* Mission Section */
+        .mission {
+            padding: 100px 0;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .mission-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .mission h2 {
+            font-size: 36px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .mission p {
+            font-size: 18px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Team Section */
+        .team {
+            padding: 100px 0;
+        }
+
+        .team-content {
+            text-align: center;
+        }
+
+        .team h2 {
+            font-size: 36px;
+            margin-bottom: 24px;
+        }
+
+        .team-description {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+
+        .company-logos {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            opacity: 0.6;
+        }
+
+        .company-logos span {
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        /* Scouts Section */
+        .scouts {
+            padding: 100px 0;
+            min-height: 80vh;
+        }
+
+        .scouts h2 {
+            font-size: 36px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .scouts-content {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scouts p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        /* Strassens Search Section */
+        .strassens {
+            padding: 100px 0 50px;
+            min-height: 100vh;
+            /* Background image would be applied here if using external assets */
+            /* background-image: url('/desktop/assets/PiText_background.png'); */
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .app-header h1 {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .app-header .highlight {
+            color: var(--accent-color);
+        }
+
+        .app-header .tagline {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .examples {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .examples-label {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .example-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .query-section {
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        #query, #deepDiveQuery {
+            flex: 1;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        #query:focus, #deepDiveQuery:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .primary-btn, .secondary-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .primary-btn:hover, .secondary-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .secondary-btn {
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+
+        .suggestions {
+            display: none;
+        }
+
+        .result-section {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .diagram-container {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .diagram-container:empty::before {
+            content: "Your diagram will appear here";
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .selection-section {
+            max-width: 700px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .selection-section.show {
+            display: block;
+        }
+
+        .selection-indicator {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .selection-header {
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .selected-text {
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .deep-dive-input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .deep-dive-response {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: none;
+        }
+
+        .deep-dive-response.show {
+            display: block;
+        }
+
+        /* Notifications */
+        .notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+        }
+
+        .notification {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+
+        .cta p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        footer p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 100px 0 60px;
+            }
+
+            .company-logos {
+                gap: 10px;
+            }
+
+            .company-logos span {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            .primary-btn {
+                width: 100%;
+            }
+
+            .examples {
+                justify-content: flex-start;
+                padding: 0 10px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-  <header class="app-header">
-    <h1>Answers, you can <span class="highlight">See!</span></h1>
-    <p class="tagline">Ask anything. Get responses in <strong>Textcharts.</strong></p>
-    <div class="examples">
-      <p class="examples-label">Try:</p>
-      <button class="example-btn" data-query="How do rainbows form">"How do rainbows form"</button>
-      <button class="example-btn" data-query="Pepsi vs Coke">"Pepsi vs Coke"</button>
-      <button class="example-btn" data-query="Steps to bake a cake">"Steps to bake a cake"</button>
-    </div>
-  </header>
+    <!-- Header -->
+    <header>
+        <nav class="container">
+            <div class="logo">Yutori</div>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
+                <li><a href="#mission" class="nav-link" data-section="mission">Mission</a></li>
+                <li><a href="#team" class="nav-link" data-section="team">Team</a></li>
+                <li><a href="#scouts" class="nav-link" data-section="scouts">Scouts</a></li>
+                <li><a href="#strassens" class="nav-link" data-section="strassens">Strassens Search</a></li>
+            </ul>
+            <a href="#waitlist" class="waitlist-btn">Join Waitlist</a>
+        </nav>
+    </header>
 
-  <main class="app-main">
-    <section class="query-section">
-      <div class="input-wrapper">
-        <input 
-          id="query" 
-          type="text"
-          placeholder="Ask anything!" 
-          autocomplete="off"
-          aria-label="Enter your question"
-        />
-        <button id="generateBtn" class="primary-btn" aria-label="Answer">
-          <span class="btn-text">Answer</span>
-        </button>
-      </div>
-      <div id="querySuggestions" class="suggestions"></div>
-    </section>
-
-    <section class="result-section">
-      <div id="result" class="diagram-container" role="region" aria-live="polite">
-      </div>
-    </section>
-
-    <section id="selectionSection" class="selection-section" >
-      <div id="selectionIndicator" class="selection-indicator">
-        <div class="selection-header">
-          <strong>Selected:</strong> 
-          <span id="selectedText" class="selected-text"></span>
+    <!-- Home/Hero Section -->
+    <section id="home" class="hero active">
+        <div class="container">
+            <div class="hero-content">
+                <h1>AI agents for everyday life</h1>
+                <p class="subtitle">Building reliable AI assistants that handle your digital tasks, creating space for what truly matters</p>
+            </div>
         </div>
-        <div class="deep-dive-input-wrapper">
-          <input 
-            id="deepDiveQuery" 
-            type="text"
-            placeholder="Ask about this selection…" 
-            autocomplete="off"
-            aria-label="Ask about selected content"
-          />
-          <button id="askBtn" class="secondary-btn" aria-label="Ask question">
-            Ask
-          </button>
-        </div>
-      </div>
-
-      <div id="deepDiveResponse" class="deep-dive-response"></div>
     </section>
-  </main>
 
-  <div id="notifications" class="notification-container" role="status" aria-live="polite"></div>
+    <!-- Mission Section -->
+    <section id="mission" class="mission">
+        <div class="container">
+            <div class="mission-content">
+                <h2>Reimagining the web</h2>
+                <p>The web is simultaneously one of humanity's greatest inventions and a mess overdue for an overhaul. People spend a significant portion of their lives online doing soul-sucking tasks, ultimately capped by their bandwidth.</p>
+                <p>Whether it's simple tasks like ordering groceries or tracking campground reservations, or more complex scenarios like planning and coordinating a group trip — both the floor and the ceiling of human productivity on the web needs to be uplifted.</p>
+                <p>We are building AI agents that can reliably do everyday digital tasks for you on the web, towards an AI chief-of-staff for everyone. Our mission is to build the best AI assistants to make space for the meaningful things and create yutori in your life.</p>
+            </div>
+        </div>
+    </section>
 
-  <script type="module" src="/desktop/js/app.js"></script>
-  
-  <script nomodule>
-    document.body.innerHTML = '<div class="error-message" style="text-align: center; padding: 2rem;"><h2>Browser Not Supported</h2><p>Please use a modern browser that supports ES6 modules.</p></div>';
-  </script>
+    <!-- Team Section -->
+    <section id="team" class="team">
+        <div class="container">
+            <div class="team-content">
+                <h2>World-class team</h2>
+                <p class="team-description">
+                    We are building the entire stack to be agent-first, from training our own models to generative product interfaces. We're doing this with a world-class founding team that previously worked at:
+                </p>
+                <div class="company-logos">
+                    <span>Meta (Llama 3 & 4, FAIR)</span>
+                    <span>Google (Gemini)</span>
+                    <span>DeepMind</span>
+                    <span>Microsoft Research</span>
+                    <span>Tesla Autopilot</span>
+                    <span>Palantir</span>
+                    <span>Stanford</span>
+                    <span>CMU</span>
+                    <span>Georgia Tech</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scouts Section -->
+    <section id="scouts" class="scouts">
+        <div class="container">
+            <div class="scouts-content">
+                <h2>Scouts: Always-on AI agents</h2>
+                <p>Scouts are AI agents that monitor the web for anything you care about. They work 24/7 to track changes, opportunities, and important updates, ensuring you never miss what matters to you.</p>
+                <a href="#waitlist" class="cta-button">Join Waitlist for Scouts</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Strassens Search Section -->
+    <section id="strassens" class="strassens">
+        <div class="container">
+            <div class="app-header">
+                <h1>Answers, you can <span class="highlight">See!</span></h1>
+                <p class="tagline">Ask anything. Get responses in <strong>Textcharts.</strong></p>
+                <div class="examples">
+                    <p class="examples-label">Try:</p>
+                    <button class="example-btn" data-query="How do rainbows form">"How do rainbows form"</button>
+                    <button class="example-btn" data-query="Pepsi vs Coke">"Pepsi vs Coke"</button>
+                    <button class="example-btn" data-query="Steps to bake a cake">"Steps to bake a cake"</button>
+                </div>
+            </div>
+            
+            <main class="app-main">
+                <div class="query-section">
+                    <div class="input-wrapper">
+                        <input
+                            id="query"
+                            type="text"
+                            placeholder="Ask anything!"
+                            autocomplete="off"
+                            aria-label="Enter your question"
+                        />
+                        <button id="generateBtn" class="primary-btn" aria-label="Answer">
+                            <span class="btn-text">Answer</span>
+                        </button>
+                    </div>
+                    <div id="querySuggestions" class="suggestions"></div>
+                </div>
+                
+                <div class="result-section">
+                    <div id="result" class="diagram-container" role="region" aria-live="polite"></div>
+                </div>
+                
+                <div id="selectionSection" class="selection-section">
+                    <div id="selectionIndicator" class="selection-indicator">
+                        <div class="selection-header">
+                            <strong>Selected:</strong>
+                            <span id="selectedText" class="selected-text"></span>
+                        </div>
+                        <div class="deep-dive-input-wrapper">
+                            <input
+                                id="deepDiveQuery"
+                                type="text"
+                                placeholder="Ask about this selection…"
+                                autocomplete="off"
+                                aria-label="Ask about selected content"
+                            />
+                            <button id="askBtn" class="secondary-btn" aria-label="Ask question">
+                                Ask
+                            </button>
+                        </div>
+                    </div>
+                    <div id="deepDiveResponse" class="deep-dive-response"></div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta" id="waitlist">
+        <div class="container">
+            <h2>Join the future</h2>
+            <p>Be among the first to experience AI that actually gets things done</p>
+            <a href="#" class="cta-button">Join the Waitlist</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Yutori. Building AI agents for everyday life.</p>
+        </div>
+    </footer>
+
+    <!-- Notifications -->
+    <div id="notifications" class="notification-container" role="status" aria-live="polite"></div>
+
+    <script type="module">
+        // Navigation functionality
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
+
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+
+            const targetSection = document.getElementById(sectionId);
+            const targetLink = document.querySelector(`[data-section="${sectionId}"]`);
+            
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+
+            // Scroll to top when changing sections
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.getAttribute('data-section');
+                showSection(sectionId);
+                history.pushState(null, '', `#${sectionId}`);
+            });
+        });
+
+        // Handle initial hash
+        const initialHash = window.location.hash.slice(1) || 'home';
+        showSection(initialHash);
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', () => {
+            const hash = window.location.hash.slice(1) || 'home';
+            showSection(hash);
+        });
+
+        // Smooth scrolling for CTA buttons
+        document.querySelectorAll('a[href="#waitlist"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.getElementById('waitlist').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            });
+        });
+
+        // Header scroll effect
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 50) {
+                header.style.background = 'rgba(10, 10, 10, 0.95)';
+                header.style.padding = '15px 0';
+            } else {
+                header.style.background = 'rgba(10, 10, 10, 0.8)';
+                header.style.padding = '20px 0';
+            }
+            
+            lastScroll = currentScroll;
+        });
+
+        // Strassens Search functionality
+        async function initializeMermaid() {
+            if (window.mermaid) {
+                window.mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'dark',
+                    themeVariables: {
+                        primaryColor: '#2563eb',
+                        primaryTextColor: '#fff',
+                        primaryBorderColor: '#1d4ed8',
+                        lineColor: '#5b5b5b',
+                        secondaryColor: '#1f2937',
+                        tertiaryColor: '#374151',
+                        background: '#0a0a0a',
+                        mainBkg: '#1f2937',
+                        secondBkg: '#374151',
+                        tertiaryBkg: '#4b5563',
+                        primaryBorderColor: '#1d4ed8',
+                        secondaryBorderColor: '#374151',
+                        tertiaryBorderColor: '#4b5563',
+                        noteBkgColor: '#fef3c7',
+                        noteTextColor: '#92400e',
+                        noteBorderColor: '#f59e0b',
+                        actorBorder: '#1d4ed8',
+                        actorBkg: '#1f2937',
+                        actorTextColor: '#fff',
+                        actorLineColor: '#5b5b5b',
+                        signalColor: '#fff',
+                        signalTextColor: '#fff',
+                        labelBoxBkgColor: '#1f2937',
+                        labelBoxBorderColor: '#1d4ed8',
+                        labelTextColor: '#fff',
+                        loopTextColor: '#fff',
+                        activationBorderColor: '#1d4ed8',
+                        activationBkgColor: '#374151',
+                        sequenceNumberColor: '#fff'
+                    }
+                });
+            }
+        }
+
+        // Initialize Mermaid when Strassens section is shown
+        const strassensObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.classList.contains('active') && mutation.target.id === 'strassens') {
+                    initializeMermaid();
+                }
+            });
+        });
+
+        const strassensSection = document.getElementById('strassens');
+        if (strassensSection) {
+            strassensObserver.observe(strassensSection, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        // Example button functionality
+        const exampleBtns = document.querySelectorAll('.example-btn');
+        const queryInput = document.getElementById('query');
+
+        exampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const query = btn.getAttribute('data-query');
+                if (queryInput) {
+                    queryInput.value = query;
+                    queryInput.focus();
+                }
+            });
+        });
+
+        // Generate button functionality
+        const generateBtn = document.getElementById('generateBtn');
+        const resultDiv = document.getElementById('result');
+
+        if (generateBtn) {
+            generateBtn.addEventListener('click', async () => {
+                const query = queryInput.value.trim();
+                if (!query) {
+                    showNotification('Please enter a question!');
+                    return;
+                }
+
+                // Show loading state
+                generateBtn.innerHTML = '<span class="loading"></span>';
+                generateBtn.disabled = true;
+                resultDiv.innerHTML = '<div style="color: var(--text-secondary);">Generating diagram...</div>';
+
+                // Simulate API call (replace with actual implementation)
+                setTimeout(() => {
+                    // Example Mermaid diagram
+                    const mermaidCode = `
+                    graph TD
+                        A[${query}] --> B[Processing]
+                        B --> C[Analysis]
+                        C --> D[Result]
+                        D --> E[Visual Output]
+                    `;
+
+                    resultDiv.innerHTML = `<div class="mermaid">${mermaidCode}</div>`;
+                    
+                    if (window.mermaid) {
+                        window.mermaid.run();
+                    }
+
+                    generateBtn.innerHTML = '<span class="btn-text">Answer</span>';
+                    generateBtn.disabled = false;
+                }, 1500);
+            });
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            container.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Selection functionality (simplified)
+        const selectionSection = document.getElementById('selectionSection');
+        const selectedText = document.getElementById('selectedText');
+        const deepDiveResponse = document.getElementById('deepDiveResponse');
+        const askBtn = document.getElementById('askBtn');
+        const deepDiveQuery = document.getElementById('deepDiveQuery');
+
+        if (resultDiv) {
+            resultDiv.addEventListener('mouseup', () => {
+                const selection = window.getSelection();
+                const text = selection.toString().trim();
+                
+                if (text && selectionSection && selectedText) {
+                    selectedText.textContent = text;
+                    selectionSection.classList.add('show');
+                }
+            });
+        }
+
+        if (askBtn) {
+            askBtn.addEventListener('click', () => {
+                const query = deepDiveQuery.value.trim();
+                if (!query) {
+                    showNotification('Please enter a question about the selection!');
+                    return;
+                }
+
+                if (deepDiveResponse) {
+                    deepDiveResponse.innerHTML = `<p>Analyzing: "${query}" in context of selected content...</p>`;
+                    deepDiveResponse.classList.add('show');
+                }
+            });
+        }
+    </script>
+    
+    <!-- External resources for Strassens functionality -->
+    <!-- Note: These would normally load from /desktop/css/styles.css and /desktop/js/app.js -->
+    <!-- The functionality has been integrated inline above -->
+    
+    <script nomodule>
+        document.body.innerHTML = '<div class="error-message" style="text-align: center; padding: 2rem;"><h2>Browser Not Supported</h2><p>Please use a modern browser that supports ES6 modules.</p></div>';
+    </script>
 </body>
 </html>
