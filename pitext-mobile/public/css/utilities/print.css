@@ -3,92 +3,29 @@
 /* ============================================
    Print Styles
    ============================================ */
-   @media print {
-    /* Reset colors for print */
-    body {
-      background: white !important;
-      color: black !important;
-    }
-    
-    /* Hide UI elements */
-    .mobile-header,
-    .mobile-menu,
-    .app-footer,
-    .query-section,
-    .selection-section,
-    .diagram-utils,
-    .notification-container,
-    .examples,
-    .navigation,
-    .menu-button,
-    .cta-button,
-    .waitlist-btn,
-    .keyboard-shortcuts {
-      display: none !important;
-    }
-    
-    /* Adjust sections */
-    .content-section {
-      padding-top: 0 !important;
-      page-break-inside: avoid;
-    }
-    
-    /* Diagram container adjustments */
-    .diagram-container {
-      border: 1px solid black !important;
-      background: none !important;
-      padding: 10px !important;
-      page-break-inside: avoid;
-    }
-    
-    /* Mermaid diagram adjustments */
-    .mermaid text {
-      fill: black !important;
-      text-shadow: none !important;
-    }
-    
-    .mermaid .node rect,
-    .mermaid .node circle,
-    .mermaid .node ellipse,
-    .mermaid .node polygon {
-      fill: white !important;
-      stroke: black !important;
-    }
-    
-    .mermaid .edgePath path {
-      stroke: black !important;
-    }
-    
-    /* Text adjustments */
-    h1, h2, h3, h4, h5, h6 {
-      color: black !important;
-      page-break-after: avoid;
-    }
-    
-    p {
-      color: black !important;
-      orphans: 3;
-      widows: 3;
-    }
-    
-    /* Links */
-    a {
-      color: black !important;
-      text-decoration: underline;
-    }
-    
-    a[href^="http"]:after {
-      content: " (" attr(href) ")";
-      font-size: 0.8em;
-    }
-    
-    /* Remove backgrounds */
-    * {
-      background: transparent !important;
-    }
-    
-    /* Page margins */
-    @page {
-      margin: 2cm;
-    }
+@media print {
+  body {
+    background: white;
+    color: black;
   }
+  
+  .app-header,
+  .app-footer,
+  .query-section,
+  .selection-section,
+  .diagram-utils,
+  .notification-container {
+    display: none;
+  }
+  
+  .diagram-container {
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  
+  .mermaid text {
+    fill: black !important;
+    text-shadow: none;
+  }
+}
