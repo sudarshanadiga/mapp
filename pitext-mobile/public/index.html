@@ -622,6 +622,26 @@
             transform: translateY(0);
         }
 
+        .notification-icon {
+            font-size: 1.25rem;
+        }
+
+        .notification-success {
+            border-color: #51cf66;
+        }
+
+        .notification-success .notification-icon {
+            color: #51cf66;
+        }
+
+        .notification-error {
+            border-color: #ff6b6b;
+        }
+
+        .notification-error .notification-icon {
+            color: #ff6b6b;
+        }
+
         /* Loading animation */
         .loading-spinner {
             width: 32px;
@@ -685,6 +705,30 @@
         .mermaid svg {
             max-width: 100%;
             height: auto;
+        }
+
+        /* Selected element styling for diagrams */
+        .selected-element rect,
+        .selected-element circle,
+        .selected-element ellipse,
+        .selected-element polygon {
+            stroke: #FFD600 !important;
+            stroke-width: 3px !important;
+            filter: drop-shadow(0 0 6px #FFD600);
+        }
+
+        .selected-element text {
+            font-weight: bold !important;
+            filter: drop-shadow(0 0 4px #FFD600);
+        }
+
+        /* Make selection work better on touch devices */
+        .mermaid .node,
+        .mermaid text,
+        .mermaid .edgeLabel,
+        .mermaid rect[fill]:not([fill="none"]) {
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(255, 214, 0, 0.3);
         }
     </style>
 </head>
@@ -817,7 +861,7 @@
     </section>
 
     <!-- CTA/Waitlist Section -->
-    <section id="waitlist" class="content-section waitlist-section">
+    <section id="waitlist" class="content-section cta-section">
         <h2>Join the future</h2>
         <p>Be among the first to experience AI that actually gets things done</p>
         <a href="#" class="cta-button">Join the Waitlist</a>
@@ -899,6 +943,94 @@
                 console.error('API Request failed:', error);
                 throw error;
             }
+        }
+
+        // Setup diagram selection functionality
+        function setupDiagramSelection() {
+            const resultDiv = document.getElementById('result');
+            const svg = resultDiv.querySelector('svg');
+            if (!svg) return;
+            
+            // Make nodes and text elements clickable
+            const selectableElements = svg.querySelectorAll('g.node, .node, text, .edgeLabel, rect[fill]:not([fill="none"]):not([fill="#ffffff"]):not([fill="white"])');
+            
+            selectableElements.forEach(element => {
+                // Skip if element is too small or doesn't contain meaningful content
+                const bbox = element.getBBox ? element.getBBox() : null;
+                if (bbox && (bbox.width < 10 || bbox.height < 10)) return;
+                
+                element.style.cursor = 'pointer';
+                
+                element.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    
+                    // Extract text from the element
+                    let text = '';
+                    
+                    // For text elements
+                    if (element.tagName === 'text' || element.tagName === 'tspan') {
+                        text = element.textContent.trim();
+                    } 
+                    // For groups containing text
+                    else if (element.querySelector('text')) {
+                        const textElements = element.querySelectorAll('text');
+                        text = Array.from(textElements).map(t => t.textContent.trim()).join(' ');
+                    }
+                    // For rectangles in sequence diagrams, find associated text
+                    else if (element.tagName === 'rect') {
+                        const rect = element.getBBox();
+                        const texts = svg.querySelectorAll('text');
+                        texts.forEach(t => {
+                            const textBox = t.getBBox();
+                            // Check if text is inside this rectangle
+                            if (textBox.x >= rect.x - 5 && 
+                                textBox.x + textBox.width <= rect.x + rect.width + 5 &&
+                                textBox.y >= rect.y - 5 && 
+                                textBox.y + textBox.height <= rect.y + rect.height + 5) {
+                                text += t.textContent.trim() + ' ';
+                            }
+                        });
+                    }
+                    
+                    text = text.trim();
+                    
+                    if (text) {
+                        // Show selection UI
+                        const selectionSection = document.getElementById('selectionSection');
+                        const selectedTextSpan = document.getElementById('selectedText');
+                        
+                        selectedTextSpan.textContent = text;
+                        selectionSection.classList.add('show');
+                        selectionSection.dataset.selectedText = text;
+                        
+                        // Visual feedback - remove previous selection
+                        svg.querySelectorAll('.selected-element').forEach(el => {
+                            el.classList.remove('selected-element');
+                        });
+                        
+                        // Add selection class
+                        element.classList.add('selected-element');
+                        
+                        // Focus on deep dive input
+                        const deepDiveInput = document.getElementById('deepDiveQuery');
+                        if (deepDiveInput) {
+                            deepDiveInput.focus();
+                        }
+                    }
+                });
+            });
+            
+            // Click on SVG background to deselect
+            svg.addEventListener('click', (e) => {
+                if (e.target === svg || e.target.classList.contains('background')) {
+                    svg.querySelectorAll('.selected-element').forEach(el => {
+                        el.classList.remove('selected-element');
+                    });
+                    const selectionSection = document.getElementById('selectionSection');
+                    selectionSection.classList.remove('show');
+                    selectionSection.dataset.selectedText = '';
+                }
+            });
         }
 
         // Mobile menu functionality
@@ -1042,6 +1174,9 @@
                     
                     if (window.mermaid) {
                         await window.mermaid.run();
+                        
+                        // Set up diagram selection after rendering
+                        setupDiagramSelection();
                     }
 
                     // Store original query for deep dive
@@ -1066,7 +1201,7 @@
             });
         }
 
-        // Selection handling for mobile (touch events)
+        // Handle text selection for fallback (keeping the original functionality)
         let touchTimer;
         
         if (resultDiv) {
