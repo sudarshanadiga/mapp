@@ -642,7 +642,7 @@
             stroke-width: 2px !important;
         }
         
-        /* Examples styling */
+        /* FIXED: Examples styling with proper alignment */
         .examples {
             display: flex;
             align-items: center;
@@ -655,6 +655,8 @@
         .examples-label {
             font-size: 0.9rem;
             opacity: 0.7;
+            margin: 0; /* Remove default paragraph margins */
+            line-height: 1.5; /* Match button line height */
         }
         
         .example-btn {
@@ -667,6 +669,8 @@
             font-family: inherit; /* Ensures Optima is used */
             cursor: pointer;
             transition: all 0.2s ease;
+            margin: 0; /* Ensure no default margins */
+            line-height: 1.5; /* Consistent line height */
         }
         
         .example-btn:hover {
@@ -935,7 +939,7 @@
                 <h1>Answers, you can <span class="highlight">See!</span></h1>
                 <p class="tagline">Ask anything. Get responses in <strong>Textcharts.</strong></p>
                 <div class="examples">
-                    <p class="examples-label">Try:</p>
+                    <span class="examples-label">Try:</span>
                     <button class="example-btn" data-query="How do rainbows form">"How do rainbows form"</button>
                     <button class="example-btn" data-query="Pepsi vs Coke">"Pepsi vs Coke"</button>
                     <button class="example-btn" data-query="Steps to bake a cake">"Steps to bake a cake"</button>
