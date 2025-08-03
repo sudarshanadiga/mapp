@@ -12,22 +12,44 @@
     <link rel="icon" href="/desktop/assets/Strassens_icon.ico" type="image/x-icon"/>
     <link rel="apple-touch-icon" href="/desktop/assets/Strassens_icon.ico">
     
-    <!-- Modern Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Optima Font Setup -->
+    <!-- Note: Optima is a system font on macOS. For other systems, it will fall back to similar fonts -->
+    <!-- If you have a web font license for Optima, uncomment and add the link below: -->
+    <!-- <link rel="stylesheet" href="path-to-your-optima-webfont.css"> -->
+    
+    <!-- Remove Google Font as we're using Optima -->
+    <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"> -->
     
     <!-- Clean, Modern Navigation Styles -->
     <style>
+        /* 
+         * Font Configuration
+         * Using Optima as the primary font - an elegant humanist sans-serif
+         * designed by Hermann Zapf. Falls back to similar fonts on systems
+         * without Optima installed.
+         * 
+         * Fallback order:
+         * - Optima (macOS)
+         * - Candara (Windows)
+         * - Segoe UI (Windows)
+         * - Helvetica Neue
+         * - Arial
+         * - sans-serif
+         */
+        
         /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Apply Optima font globally with fallbacks */
+            font-family: 'Optima', 'Candara', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Optima', 'Candara', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
             background: #000000;
             color: #ffffff;
             overflow-x: hidden;
@@ -72,8 +94,8 @@
         .navbar-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 1rem 32px;
-            min-height: 72px;
+            padding: 0.75rem 32px;
+            min-height: 60px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -99,19 +121,15 @@
             align-items: center;
             text-decoration: none;
             transition: all 0.2s ease;
-            height: 50px;
-            overflow: hidden;
         }
         
         .navbar-logo img {
-            height: 80px; /* Larger to compensate for empty space */
+            height: 32px;
             width: auto;
-            object-fit: cover;
-            object-position: center;
+            object-fit: contain;
             filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) 
                     drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
             transition: all 0.3s ease;
-            margin: -15px 0; /* Negative margin to crop visually */
         }
         
         .navbar-logo:hover img {
@@ -122,7 +140,7 @@
         
         /* Adjust logo size on scroll */
         .navbar.scrolled .navbar-logo img {
-            height: 70px;
+            height: 28px;
         }
         
         /* Navigation Links */
@@ -138,6 +156,7 @@
             text-decoration: none;
             font-size: 15px;
             font-weight: 500;
+            letter-spacing: 0.5px; /* Optima looks great with slight letter spacing */
             transition: color 0.2s ease;
             position: relative;
             text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -169,6 +188,8 @@
             text-decoration: none;
             font-size: 15px;
             font-weight: 600;
+            font-family: inherit; /* Ensures Optima is used */
+            letter-spacing: 0.3px;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
@@ -197,7 +218,7 @@
         /* Content Sections */
         .content-section {
             min-height: 100vh;
-            padding: 120px 32px 80px;
+            padding: 100px 32px 80px;
             display: none;
         }
         
@@ -214,18 +235,27 @@
         .hero {
             text-align: center;
             padding: 80px 0;
+            overflow: visible; /* Ensure no clipping from container */
         }
         
         .hero h1 {
             font-size: 64px;
             font-weight: 700;
-            line-height: 1.1;
-            letter-spacing: -1px;
+            line-height: 1.35;
+            letter-spacing: 0.5px;
             margin-bottom: 24px;
+            padding: 0 4px 12px 4px; /* Padding on all sides to prevent any clipping */
             background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            display: inline-block; /* Ensure proper box model */
+            -webkit-box-decoration-break: clone; /* Better rendering for webkit */
+            box-decoration-break: clone;
+            position: relative;
+            /* Ensure descenders have space */
+            overflow: visible;
+            clip-path: none;
         }
         
         .hero .subtitle {
@@ -247,7 +277,7 @@
             font-size: 48px;
             font-weight: 700;
             margin-bottom: 32px;
-            letter-spacing: -0.5px;
+            letter-spacing: 0.5px;
         }
         
         p {
@@ -309,6 +339,7 @@
             flex: 1;
             padding: 0.75rem 1rem;
             font-size: 1rem;
+            font-family: inherit; /* Ensures Optima is used */
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
@@ -328,6 +359,7 @@
             color: #000000;
             border: none;
             border-radius: 8px;
+            font-family: inherit; /* Ensures Optima is used */
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -409,6 +441,7 @@
         #deepDiveQuery {
             flex: 1;
             padding: 0.5rem;
+            font-family: inherit; /* Ensures Optima is used */
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
@@ -429,6 +462,7 @@
             color: #ffffff;
             border-radius: 6px;
             font-size: 0.875rem;
+            font-family: inherit; /* Ensures Optima is used */
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -517,7 +551,7 @@
             background: rgba(255, 255, 255, 0.1);
             padding: 0.2rem 0.4rem;
             border-radius: 3px;
-            font-family: 'Consolas', 'Monaco', monospace;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
         }
         
         .answer mark {
@@ -540,6 +574,7 @@
             color: rgba(255, 255, 255, 0.7);
             border-radius: 6px;
             font-size: 0.875rem;
+            font-family: inherit; /* Ensures Optima is used */
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -569,6 +604,7 @@
             color: rgba(255, 255, 255, 0.7);
             border-radius: 6px;
             font-size: 0.875rem;
+            font-family: inherit; /* Ensures Optima is used */
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -628,6 +664,7 @@
             padding: 0.25rem 0.75rem;
             border-radius: 6px;
             font-size: 0.85rem;
+            font-family: inherit; /* Ensures Optima is used */
             cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -735,12 +772,12 @@
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .navbar-container {
-                padding: 1rem 20px;
-                min-height: 64px;
+                padding: 0.75rem 20px;
+                min-height: 56px;
             }
             
             .navbar-logo img {
-                height: 32px;
+                height: 24px;
             }
             
             .navbar-nav {
@@ -757,6 +794,8 @@
             
             .hero h1 {
                 font-size: 40px;
+                line-height: 1.3; /* Increased line height for mobile */
+                padding-bottom: 6px; /* Padding for mobile descenders */
             }
             
             h2 {
@@ -764,14 +803,14 @@
             }
             
             .content-section {
-                padding: 100px 20px 60px;
+                padding: 80px 20px 60px;
             }
         }
         
         /* CTA Section */
         .cta-section {
             text-align: center;
-            padding: 120px 32px;
+            padding: 100px 32px;
         }
         
         .cta-button {
@@ -785,6 +824,8 @@
             text-decoration: none;
             font-size: 18px;
             font-weight: 600;
+            font-family: inherit; /* Ensures Optima is used */
+            letter-spacing: 0.3px;
             transition: all 0.2s ease;
             margin-top: 32px;
         }
