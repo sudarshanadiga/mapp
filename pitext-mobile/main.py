@@ -144,7 +144,20 @@ class LLMService:
     async def generate_diagram(self, query: str) -> dict:
         """Generate a diagram from query, selecting diagram type and prompts appropriately."""
         if not self.client:
-            fallback_diagram = f"flowchart TD\n    A[Start] --> B[Process]\n    B --> C[End]\n    %% Query: {query}"
+            fallback_diagram = f"""%%{{init: {{
+  "theme": "base",
+  "fontFamily": "Optima, sans-serif",
+  "fontSize" : "13px",
+  "flowchart": {{ 
+    "htmlLabels": false, 
+    "wrap": true,
+    "useMaxWidth": true
+  }}
+}}}}%%
+flowchart TD
+    A[Start] --> B[Process]
+    B --> C[End]
+    %% Query: {query}"""
             return {
                 "diagram": self._clean_diagram_code(fallback_diagram),
                 "content": f"Generated content for: {query}",
@@ -224,7 +237,20 @@ class LLMService:
             }
         except Exception as e:
             logger.error(f"Diagram generation failed: {e}")
-            fallback_diagram = f"flowchart TD\n    A[Start] --> B[Process]\n    B --> C[End]\n    %% Query: {query}"
+            fallback_diagram = f"""%%{{init: {{
+  "theme": "base",
+  "fontFamily": "Optima, sans-serif",
+  "fontSize" : "13px",
+  "flowchart": {{ 
+    "htmlLabels": false, 
+    "wrap": true,
+    "useMaxWidth": true
+  }}
+}}}}%%
+flowchart TD
+    A[Start] --> B[Process]
+    B --> C[End]
+    %% Query: {query}"""
             return {
                 "diagram": self._clean_diagram_code(fallback_diagram),
                 "content": f"Generated content for: {query}",
@@ -422,4 +448,4 @@ app = create_app()
 asgi_app = app
 
 if __name__ == "__main__":
-    main() 
+    main()

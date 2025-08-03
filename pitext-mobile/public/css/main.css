@@ -14,7 +14,7 @@
 /* Component styles */
 @import url('./components/buttons.css');
 @import url('./components/forms.css');
-@import url('./components/diagram.css');
+@import url('./components/diagrams.css');
 @import url('./components/selection.css');
 @import url('./components/notifications.css');
 @import url('./components/dialogs.css');

@@ -6,7 +6,7 @@ Follow this exact pattern:
 
 %%{init: {
   "theme": "base",
-  "fontFamily": "sans-serif",
+  "fontFamily": "Optima, sans-serif",
   "fontSize" : "13px",
   "flowchart": { 
     "htmlLabels": false, 

@@ -22,7 +22,7 @@ export class Config {
     // Mermaid Configuration
     this.mermaid = {
       theme: 'base',
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: 'Optima, "Optima Nova", "Linux Biolinum", "URW Classico", "Segoe UI", -apple-system, sans-serif',
       fontSize: '13px',
       startOnLoad: false,
       securityLevel: 'loose',
