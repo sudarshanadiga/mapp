@@ -1,6 +1,6 @@
 /* css/base/typography.css */
 body {
-  background: #000 url("/codegen/PiText_background.png") center/100% auto no-repeat fixed;
+  background: #000 center/100% auto no-repeat fixed;
   color: #f0f0f0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 2rem;
