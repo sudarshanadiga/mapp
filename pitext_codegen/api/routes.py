@@ -157,7 +157,7 @@ def setup_static_routes(app: FastAPI):
             return FileResponse(favicon_path)
     
     # Serve background image if it exists
-    bg_path = public_dir / "PiText_background.png"
+    #bg_path = public_dir / "PiText_background.png"
     if bg_path.exists():
         @app.get(f"{config.API_PREFIX}/PiText_background.png", include_in_schema=False)
         async def background():

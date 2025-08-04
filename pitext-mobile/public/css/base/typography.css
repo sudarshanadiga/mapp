@@ -4,7 +4,7 @@
    Base Styles
    ============================================ */
    body {
-    background: var(--bg-dark) url("/mobile/assets/PiText_background.png") center/cover no-repeat fixed;
+    background: var(--bg-dark);
     color: var(--text-light);
     font-family: 'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     line-height: 1.6;
