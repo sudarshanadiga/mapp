@@ -3,51 +3,233 @@
 /* ============================================
    Query Section
    ============================================ */
-.query-section {
-  margin-bottom: 2rem;
-}
-
-.input-wrapper {
-  display: flex;
-  gap: 0.5rem;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-#query {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  background: var(--bg-translucent);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  color: var(--text-white);
-  transition: all var(--transition-fast);
-}
-
-#query:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-#query::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-#deepDiveQuery {
-  flex: 1;
-  padding: 0.5rem;
-  background: var(--bg-translucent);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  color: var(--text-white);
-  font-size: 0.875rem;
-}
-
-#deepDiveQuery:focus, #deepDiveQuery.highlight-focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 10px rgba(255, 214, 0, 0.5);
-  transition: all 0.2s ease-in-out;
-}
+   .query-section {
+    margin-bottom: 2rem;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* Base input styles */
+  input, select, textarea {
+    font-family: var(--font-primary);
+    font-size: 16px !important; /* Prevent zoom on mobile */
+  }
+  
+  #query {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background: var(--bg-translucent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--text-white);
+    transition: all var(--transition-fast);
+    font-family: var(--font-primary);
+  }
+  
+  #query:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  #query::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-primary);
+  }
+  
+  #deepDiveQuery {
+    flex: 1;
+    padding: 0.5rem;
+    background: var(--bg-translucent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text-white);
+    font-size: 0.875rem;
+    font-family: var(--font-primary);
+  }
+  
+  #deepDiveQuery:focus, #deepDiveQuery.highlight-focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(255, 214, 0, 0.5);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  #deepDiveQuery::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-primary);
+  }
+  
+  /* Input disabled state */
+  #query:disabled,
+  #deepDiveQuery:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: rgba(255, 255, 255, 0.05);
+  }
+  
+  /* Labels */
+  label {
+    font-family: var(--font-primary);
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  
+  /* Form groups */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Select elements */
+  select {
+    padding: 0.75rem 1rem;
+    background: var(--bg-translucent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--text-white);
+    cursor: pointer;
+    font-family: var(--font-primary);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem top 50%;
+    background-size: 1.2rem;
+    padding-right: 2.5rem;
+  }
+  
+  select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+  
+  /* Textarea */
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 0.75rem 1rem;
+    background: var(--bg-translucent);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--text-white);
+    resize: vertical;
+    font-family: var(--font-primary);
+    line-height: 1.6;
+  }
+  
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Checkboxes and Radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  
+  /* Custom checkbox styling */
+  .checkbox-wrapper,
+  .radio-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    font-family: var(--font-primary);
+  }
+  
+  .checkbox-wrapper:hover,
+  .radio-wrapper:hover {
+    color: var(--text-white);
+  }
+  
+  /* Form validation states */
+  .input-error {
+    border-color: var(--error-color) !important;
+  }
+  
+  .input-success {
+    border-color: var(--success-color) !important;
+  }
+  
+  .form-error-message {
+    color: var(--error-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    font-family: var(--font-primary);
+  }
+  
+  .form-success-message {
+    color: var(--success-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    font-family: var(--font-primary);
+  }
+  
+  /* Input groups */
+  .input-group {
+    display: flex;
+    align-items: stretch;
+  }
+  
+  .input-group-prepend,
+  .input-group-append {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-light);
+    color: var(--text-light);
+    font-family: var(--font-primary);
+  }
+  
+  .input-group-prepend {
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+  }
+  
+  .input-group-append {
+    border-left: none;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  
+  .input-group input {
+    border-radius: 0;
+  }
+  
+  .input-group input:first-child {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+  }
+  
+  .input-group input:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  
+  /* Mobile-specific form styles */
+  @media (max-width: 768px) {
+    .input-wrapper {
+      flex-direction: column;
+    }
+    
+    #query {
+      width: 100%;
+    }
+    
+    input, select, textarea {
+      font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+  }

@@ -10,6 +10,8 @@ export class MermaidManager {
     this.mermaid = null;
     this.initPromise = null;
     this.renderCount = 0;
+    // Optima font stack
+    this.fontFamily = "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif";
   }
 
   /**
@@ -99,27 +101,109 @@ export class MermaidManager {
    * @returns {Object} Mermaid config
    */
   _getMermaidConfig() {
-    // Import config from our config module
     return {
       startOnLoad: false,
       theme: 'base',
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: this.fontFamily,
       fontSize: '13px',
       securityLevel: 'loose',
       logLevel: 'error',
       flowchart: {
         htmlLabels: false,
         wrap: true,
-        useMaxWidth: true
+        useMaxWidth: true,
+        nodeSpacing: 50,
+        rankSpacing: 50,
+        diagramPadding: 10,
+        // Ensure font is applied to flowcharts
+        defaultRenderer: 'dagre-wrapper'
       },
       themeVariables: {
+        fontFamily: this.fontFamily,
         primaryColor: '#ffffff',
         primaryTextColor: '#000000',
         primaryBorderColor: '#000000',
         lineColor: '#000000',
         arrowheadColor: '#000000',
         edgeLabelBackground: '#ffffff',
-        defaultLinkColor: '#000000'
+        defaultLinkColor: '#000000',
+        titleColor: '#000000',
+        // Text colors for various elements
+        labelTextColor: '#000000',
+        altTextColor: '#000000',
+        tertiaryTextColor: '#000000',
+        noteTextColor: '#000000',
+        textColor: '#000000',
+        // Sequence diagram specific
+        actorTextColor: '#000000',
+        actorLineColor: '#000000',
+        signalTextColor: '#000000',
+        messageTextColor: '#000000',
+        loopTextColor: '#000000',
+        activationBorderColor: '#000000',
+        sequenceNumberColor: '#000000',
+        // Note styling
+        noteBorderColor: '#000000',
+        noteTextColor: '#000000',
+        noteBkgColor: '#ffffff',
+        // Flowchart node styling
+        nodeBorder: '#000000',
+        nodeTextColor: '#000000',
+        // State diagram
+        labelColor: '#000000',
+        fillType0: '#ffffff',
+        fillType1: '#f9f9f9',
+        fillType2: '#f3f3f3',
+        fillType3: '#ededed',
+        fillType4: '#e8e8e8',
+        fillType5: '#e3e3e3',
+        fillType6: '#dedede',
+        fillType7: '#d9d9d9'
+      },
+      // Sequence diagram specific config
+      sequence: {
+        diagramMarginX: 50,
+        diagramMarginY: 10,
+        actorMargin: 50,
+        width: 150,
+        height: 65,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 35,
+        mirrorActors: true,
+        bottomMarginAdj: 1,
+        useMaxWidth: true,
+        rightAngles: false,
+        showSequenceNumbers: true,
+        actorFontFamily: this.fontFamily,
+        noteFontFamily: this.fontFamily,
+        messageFontFamily: this.fontFamily
+      },
+      // Gantt specific config
+      gantt: {
+        fontFamily: this.fontFamily,
+        fontSize: 11,
+        numberSectionStyles: 4,
+        axisFormat: '%Y-%m-%d'
+      },
+      // Pie chart specific config
+      pie: {
+        textPosition: 0.75,
+        fontFamily: this.fontFamily
+      },
+      // State diagram specific config
+      state: {
+        fontFamily: this.fontFamily,
+        fontSize: 11
+      },
+      // Git graph specific config
+      gitGraph: {
+        fontFamily: this.fontFamily
+      },
+      // Journey diagram specific config
+      journey: {
+        fontFamily: this.fontFamily
       }
     };
   }
@@ -173,6 +257,9 @@ export class MermaidManager {
             throw new Error('Diagram rendering failed');
         }
         
+        // Apply font fixes after rendering
+        this._applyFontFixes(container);
+        
         return true;
         
     } catch (error) {
@@ -190,6 +277,7 @@ export class MermaidManager {
                 const success = await this._checkRenderSuccess(container);
                 if (success) {
                     console.log('✅ Retry with cleaned code successful');
+                    this._applyFontFixes(container);
                     return true;
                 }
             } catch (retryError) {
@@ -200,6 +288,28 @@ export class MermaidManager {
         this._handleRenderError(container, error);
         return false;
     }
+  }
+
+  /**
+   * Apply font fixes after rendering
+   * @private
+   * @param {HTMLElement} container - Container element
+   */
+  _applyFontFixes(container) {
+    // Apply Optima font to all text elements in the SVG
+    const textElements = container.querySelectorAll('text, tspan, .label, .nodeLabel, .edgeLabel, .noteText');
+    textElements.forEach(element => {
+      element.style.fontFamily = this.fontFamily;
+    });
+
+    // Apply to any foreign object content
+    const foreignObjects = container.querySelectorAll('foreignObject');
+    foreignObjects.forEach(fo => {
+      const divs = fo.querySelectorAll('div');
+      divs.forEach(div => {
+        div.style.fontFamily = this.fontFamily;
+      });
+    });
   }
 
   /**

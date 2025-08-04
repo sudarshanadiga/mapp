@@ -1,7 +1,7 @@
 /* public/css/main.css */
 /* Main entry point - imports all other CSS files in correct order */
 
-/* Base styles */
+/* Base styles - Variables must come first */
 @import url('./base/variables.css');
 @import url('./base/reset.css');
 @import url('./base/typography.css');
@@ -27,3 +27,27 @@
 
 /* Responsive styles */
 @import url('./responsive/mobile.css');
+
+/* Global font application to ensure Optima is used everywhere */
+* {
+  font-family: var(--font-primary);
+}
+
+/* Ensure Mermaid diagrams use our font */
+.mermaid,
+.mermaid text,
+.mermaid .label,
+.mermaid .nodeLabel,
+.mermaid .edgeLabel,
+.mermaid .noteText,
+.mermaid .actor,
+.mermaid .messageText,
+.mermaid .loopText,
+.mermaid foreignObject div {
+  font-family: var(--font-primary) !important;
+}
+
+/* Override any inline font styles in SVG */
+svg text {
+  font-family: var(--font-primary) !important;
+}

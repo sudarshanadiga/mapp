@@ -6,6 +6,12 @@
 
 export class Config {
   constructor() {
+    // Font configuration
+    this.fonts = {
+      primary: "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+      monospace: "'Consolas', 'Monaco', 'Courier New', monospace"
+    };
+
     // API Configuration
     this.api = {
       baseUrl: '/mobile',
@@ -22,7 +28,7 @@ export class Config {
     // Mermaid Configuration
     this.mermaid = {
       theme: 'base',
-      fontFamily: 'Optima, "Optima Nova", "Linux Biolinum", "URW Classico", "Segoe UI", -apple-system, sans-serif',
+      fontFamily: this.fonts.primary,
       fontSize: '13px',
       startOnLoad: false,
       securityLevel: 'loose',
@@ -35,13 +41,32 @@ export class Config {
         curve: 'basis'
       },
       themeVariables: {
+        fontFamily: this.fonts.primary,
         primaryColor: '#ffffff',
         primaryTextColor: '#000000',
         primaryBorderColor: '#000000',
         lineColor: '#000000',
         arrowheadColor: '#000000',
         edgeLabelBackground: '#ffffff',
-        defaultLinkColor: '#000000'
+        defaultLinkColor: '#000000',
+        titleColor: '#000000',
+        // Ensure all text elements use our font
+        labelTextColor: '#000000',
+        altTextColor: '#000000',
+        tertiaryTextColor: '#000000',
+        noteTextColor: '#000000',
+        textColor: '#000000',
+        // Actor text in sequence diagrams
+        actorTextColor: '#000000',
+        actorLineColor: '#000000',
+        // Signal and message text
+        signalTextColor: '#000000',
+        messageTextColor: '#000000',
+        // Loop text
+        loopTextColor: '#000000',
+        // Note styling
+        noteBorderColor: '#000000',
+        noteTextColor: '#000000'
       }
     };
 

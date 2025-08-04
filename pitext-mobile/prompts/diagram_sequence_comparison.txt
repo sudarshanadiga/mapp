@@ -6,18 +6,30 @@ Follow this pattern:
 
 %%{init:
   {
+    "theme": "base",
     "themeVariables": {
-      "fontFamily": "sans-serif",
-      "fontSize": "13px"
+      "fontFamily": "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+      "fontSize": "13px",
+      "actorTextColor": "#000000",
+      "actorLineColor": "#000000",
+      "signalTextColor": "#000000",
+      "messageTextColor": "#000000",
+      "noteTextColor": "#000000",
+      "labelTextColor": "#000000",
+      "loopTextColor": "#000000"
     },
     "sequence": {
+      "fontFamily": "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+      "actorFontFamily": "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+      "messageFontFamily": "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+      "noteFontFamily": "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
       "useMaxWidth": true,
       "noteMargin": 30,
       "wrapPadding": 15,
       "mirrorActors": false,
       "wrap": true
     },
-    "themeCSS": ".actor-line { stroke-width: 0.0001px !important; } .noteText { white-space: pre-wrap !important; word-wrap: break-word !important; }"
+    "themeCSS": ".actor-line { stroke-width: 0.0001px !important; } .noteText { white-space: pre-wrap !important; word-wrap: break-word !important; font-family: 'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important; }"
   }
 }%%
 
@@ -91,4 +103,3 @@ Rules:
   - The `final` keyword should not be used.
 
   - **CRITICAL**: Do NOT wrap your output in markdown code blocks (```). Return ONLY the raw Mermaid code.
-

@@ -1,5 +1,10 @@
 /* public/css/components/buttons.css */
 
+/* Base button styles */
+button {
+  font-family: var(--font-primary);
+}
+
 .primary-btn {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -13,6 +18,7 @@
   align-items: center;
   gap: 0.5rem;
   transition: all var(--transition-fast);
+  font-family: var(--font-primary);
 }
 
 .primary-btn:hover {
@@ -43,6 +49,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: var(--font-primary);
 }
 
 .secondary-btn:hover {
@@ -59,6 +66,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: var(--font-primary);
 }
 
 .diagram-btn:hover {
@@ -75,6 +83,7 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: var(--font-primary);
 }
 
 .action-btn:hover {
@@ -92,6 +101,7 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: var(--font-primary);
 }
 
 .retry-btn:hover {
@@ -110,14 +120,42 @@
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: var(--font-primary);
 }
 
 .close-dialog:hover {
   background: #ffc400;
 }
 
-/* Add to pitext-desktop/public/css/components/buttons.css */
+/* Example buttons */
+.example-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-primary);
+}
 
+.example-btn:hover {
+  background: var(--bg-translucent);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* Mobile-specific button styles */
+@media (max-width: 768px) {
+  button, .btn {
+    min-height: 44px;
+    min-width: 44px;
+    font-family: var(--font-primary);
+  }
+}
+
+/* Button states */
 .primary-btn:disabled,
 .secondary-btn:disabled,
 .action-btn:disabled {
@@ -133,12 +171,5 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 0.875rem;
-}
-
-/* Also update the input disabled state */
-#query:disabled,
-#deepDiveQuery:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.05);
+    font-family: var(--font-primary);
 }

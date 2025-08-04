@@ -40,10 +40,11 @@
             --warning-color: #f59e0b;
             --info-color: #3b82f6;
             --accent-yellow: #FFD600;
+            --font-primary: 'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-primary);
             background-color: var(--bg-dark);
             color: var(--text-white);
             line-height: 1.6;
@@ -51,6 +52,11 @@
             padding: 0;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+        }
+
+        /* Apply Optima to all text elements */
+        h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, textarea, label, li, td, th, div {
+            font-family: var(--font-primary);
         }
 
         /* Mobile Navigation Header */
@@ -78,6 +84,7 @@
             font-weight: 600;
             letter-spacing: -0.5px;
             color: #ffffff;
+            font-family: var(--font-primary);
         }
 
         /* Mobile Menu Button */
@@ -88,6 +95,7 @@
             font-size: 24px;
             cursor: pointer;
             padding: 4px;
+            font-family: var(--font-primary);
         }
 
         /* Mobile Menu Overlay */
@@ -117,6 +125,7 @@
             color: var(--text-white);
             font-size: 28px;
             cursor: pointer;
+            font-family: var(--font-primary);
         }
 
         .mobile-nav-links {
@@ -136,6 +145,7 @@
             display: block;
             padding: 8px 0;
             transition: color 0.3s ease;
+            font-family: var(--font-primary);
         }
 
         .mobile-nav-links a:hover,
@@ -154,6 +164,7 @@
             width: 100%;
             text-align: center;
             transition: all 0.3s ease;
+            font-family: var(--font-primary);
         }
 
         /* Section management */
@@ -186,6 +197,7 @@
             background: linear-gradient(to right, #ffffff, #808080);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-family: var(--font-primary);
         }
 
         .hero .subtitle {
@@ -194,6 +206,7 @@
             margin-bottom: 32px;
             font-weight: 400;
             padding: 0 10px;
+            font-family: var(--font-primary);
         }
 
         /* Mission Section - Mobile */
@@ -207,6 +220,7 @@
             margin-bottom: 24px;
             text-align: center;
             color: var(--text-white);
+            font-family: var(--font-primary);
         }
 
         .mission p {
@@ -214,6 +228,7 @@
             line-height: 1.8;
             color: var(--text-light);
             margin-bottom: 20px;
+            font-family: var(--font-primary);
         }
 
         /* Team Section - Mobile */
@@ -226,6 +241,7 @@
             margin-bottom: 20px;
             text-align: center;
             color: var(--text-white);
+            font-family: var(--font-primary);
         }
 
         .team-description {
@@ -234,6 +250,7 @@
             line-height: 1.8;
             margin-bottom: 32px;
             text-align: center;
+            font-family: var(--font-primary);
         }
 
         .company-logos {
@@ -250,6 +267,7 @@
             padding: 6px 10px;
             border: 1px solid var(--border-light);
             border-radius: 16px;
+            font-family: var(--font-primary);
         }
 
         /* Scouts Section - Mobile */
@@ -262,6 +280,7 @@
             font-size: 28px;
             margin-bottom: 20px;
             color: var(--text-white);
+            font-family: var(--font-primary);
         }
 
         .scouts p {
@@ -269,6 +288,7 @@
             color: var(--text-light);
             margin-bottom: 32px;
             line-height: 1.8;
+            font-family: var(--font-primary);
         }
 
         /* Strassens Search Section - Mobile */
@@ -288,6 +308,7 @@
             margin-bottom: 0.5rem;
             color: var(--text-white);
             text-shadow: 0 0 10px var(--shadow-dark);
+            font-family: var(--font-primary);
         }
 
         .app-header .highlight {
@@ -298,6 +319,7 @@
             font-size: 0.95rem;
             margin-bottom: 1rem;
             opacity: 0.9;
+            font-family: var(--font-primary);
         }
 
         .examples {
@@ -311,6 +333,7 @@
             font-size: 0.85rem;
             opacity: 0.7;
             margin-bottom: 4px;
+            font-family: var(--font-primary);
         }
 
         .example-btn {
@@ -324,6 +347,7 @@
             transition: all 0.2s ease;
             width: 100%;
             text-align: center;
+            font-family: var(--font-primary);
         }
 
         .example-btn:hover,
@@ -359,6 +383,7 @@
             color: var(--text-white);
             transition: all 0.2s ease;
             -webkit-appearance: none;
+            font-family: var(--font-primary);
         }
 
         #query:focus {
@@ -369,6 +394,7 @@
 
         #query::placeholder {
             color: rgba(255, 255, 255, 0.5);
+            font-family: var(--font-primary);
         }
 
         .primary-btn {
@@ -383,6 +409,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             -webkit-appearance: none;
+            font-family: var(--font-primary);
         }
 
         .primary-btn:hover,
@@ -412,6 +439,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: var(--font-primary);
         }
 
         /* Make sequence diagrams scrollable on mobile */
@@ -431,6 +459,7 @@
             justify-content: center;
             opacity: 0.5;
             text-align: center;
+            font-family: var(--font-primary);
         }
 
         .placeholder-icon {
@@ -459,6 +488,7 @@
         .selection-header {
             margin-bottom: 12px;
             font-size: 14px;
+            font-family: var(--font-primary);
         }
 
         .selected-text {
@@ -466,6 +496,7 @@
             font-size: 14px;
             display: block;
             margin-top: 4px;
+            font-family: var(--font-primary);
         }
 
         .deep-dive-input-wrapper {
@@ -483,6 +514,7 @@
             color: var(--text-white);
             font-size: 14px;
             -webkit-appearance: none;
+            font-family: var(--font-primary);
         }
 
         #deepDiveQuery:focus {
@@ -501,6 +533,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             -webkit-appearance: none;
+            font-family: var(--font-primary);
         }
 
         .secondary-btn:hover,
@@ -519,6 +552,7 @@
             display: none;
             font-size: 14px;
             position: relative;
+            font-family: var(--font-primary);
         }
 
         .deep-dive-response.show {
@@ -541,6 +575,7 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-family: var(--font-primary);
         }
 
         /* CTA Section - Mobile */
@@ -553,12 +588,14 @@
             font-size: 32px;
             margin-bottom: 16px;
             color: var(--text-white);
+            font-family: var(--font-primary);
         }
 
         .waitlist-section p {
             font-size: 16px;
             color: var(--text-light);
             margin-bottom: 28px;
+            font-family: var(--font-primary);
         }
 
         .cta-button {
@@ -573,6 +610,7 @@
             transition: all 0.3s ease;
             width: 100%;
             max-width: 300px;
+            font-family: var(--font-primary);
         }
 
         .cta-button:hover,
@@ -591,6 +629,7 @@
         footer p {
             color: var(--text-light);
             font-size: 12px;
+            font-family: var(--font-primary);
         }
 
         /* Notifications - Mobile */
@@ -616,6 +655,7 @@
             transition: transform 0.3s ease;
             pointer-events: all;
             font-size: 14px;
+            font-family: var(--font-primary);
         }
 
         .notification-show {
@@ -676,6 +716,7 @@
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
+            font-family: var(--font-primary);
         }
 
         .diagram-btn:hover,
@@ -700,11 +741,20 @@
             max-width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            font-family: var(--font-primary) !important;
         }
 
         .mermaid svg {
             max-width: 100%;
             height: auto;
+        }
+
+        /* Override Mermaid default fonts */
+        .mermaid text,
+        .mermaid .nodeLabel,
+        .mermaid .edgeLabel,
+        .mermaid .label {
+            font-family: var(--font-primary) !important;
         }
 
         /* Selected element styling for diagrams */
@@ -883,13 +933,16 @@
 
     <!-- Mobile-optimized Scripts -->
     <script type="module">
-        // Initialize Mermaid
+        // Initialize Mermaid with Optima font
         async function initializeMermaid() {
             if (window.mermaid) {
                 window.mermaid.initialize({
                     startOnLoad: false,
                     theme: 'dark',
+                    fontFamily: "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+                    fontSize: '13px',
                     themeVariables: {
+                        fontFamily: "'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
                         primaryColor: '#2563eb',
                         primaryTextColor: '#fff',
                         primaryBorderColor: '#1d4ed8',

@@ -8,12 +8,15 @@ IMPORTANT: Do NOT include markdown code blocks (```) around your output. Return 
 
 %%{init:{
   "theme":"base",
+  "fontFamily":"'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+  "fontSize":"14px",
   "flowchart":{
     "useMaxWidth":true,
-    "fontFamily":"sans-serif",
+    "fontFamily":"'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
     "fontSize":"14px"
   },
   "themeVariables":{
+    "fontFamily":"'Optima', 'Optima Nova', 'Linux Biolinum', 'URW Classico', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
     "lineColor":"#fbbf24",
     "arrowheadColor":"#fbbf24"
   }
