@@ -12,6 +12,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from asgiref.wsgi import WsgiToAsgi
+
+# Import travel app
+sys.path.append(str(Path(__file__).parent.parent))
+from pitext_travel.main import app as travel_flask_app
 
 # Ensure project root is on sys.path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -39,8 +44,8 @@ def create_app() -> FastAPI:
     config = get_config()
 
     app = FastAPI(
-        title="PiText CodeGen",
-        description="Visual code generation and Mermaid diagram creator",
+        title="PiText",
+        description="Visual code generation, Mermaid diagram creator, and travel planner",
         version="0.1.0",
     )
 
@@ -50,8 +55,12 @@ def create_app() -> FastAPI:
     # Mount static files
     setup_static_routes(app)
 
-    # API routes
+    # API routes for desktop
     app.include_router(router)
+
+    # Mount the travel Flask app as a sub-application
+    travel_asgi_app = WsgiToAsgi(travel_flask_app)
+    app.mount("/travel", travel_asgi_app, name="travel")
 
     # Root redirect
     @app.get("/", include_in_schema=False)
@@ -67,7 +76,7 @@ def main():
 
     app = create_app()
 
-    logging.info(f"PiText CodeGen running at http://{config.HOST}:{config.PORT}")
+    logging.info(f"PiText running at http://{config.HOST}:{config.PORT}")
 
     uvicorn.run(
         app,

@@ -8,4 +8,8 @@ pillow==10.1.0
 python-multipart==0.0.6
 httpx==0.25.2
 Flask>=2.3.0
-asgiref>=3.0.0
+asgiref>=3.8.0
+flask-cors>=4.0.0
+Flask-WTF>=1.2.1
+flask-socketio>=5.3.2
+python-socketio>=5.12.0

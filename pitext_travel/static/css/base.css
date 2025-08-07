@@ -17,6 +17,31 @@ html, body {
   color: #333;
 }
 
+/* When embedded in iframe, ensure full height */
+body {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Adjust map container for iframe embedding */
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh; /* Use viewport height */
+  z-index: 0;
+  background-color: #e0e0e0;
+}
+
+/* Ensure panel is properly positioned in iframe */
+#panel {
+  position: fixed; /* Changed from absolute to fixed for iframe */
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 10030;
+}
+
 /* Utility Classes */
 .hidden {
   display: none !important;
@@ -29,4 +54,18 @@ html, body {
 /* Transitions */
 * {
   transition: opacity 0.2s ease;
+}
+
+/* Iframe-specific adjustments */
+@media (max-width: 768px) {
+  #map {
+    height: 100vh;
+  }
+  
+  #panel {
+    bottom: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+  }
 }

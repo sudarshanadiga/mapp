@@ -304,6 +304,29 @@
             border-radius: 6px;
         }
         
+        /* Streets Section Specific */
+        #streets {
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        
+        #streets .container {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100vw !important;
+            max-width: 100% !important;
+            height: 100vh !important;
+        }
+        
+        #streets-iframe {
+            position: absolute;
+            top: 60px; /* Account for navbar height */
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            border: none;
+        }
+        
         /* Strassens Section Specific */
         .strassens {
             background: center/cover no-repeat fixed;
@@ -869,8 +892,7 @@
             <ul class="navbar-nav">
                 <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
                 <li><a href="#mission" class="nav-link" data-section="mission">Mission</a></li>
-                <!-- <li><a href="#team" class="nav-link" data-section="team">Team</a></li> -->
-                <!-- <li><a href="#scouts" class="nav-link" data-section="scouts">Scouts</a></li> -->
+                <li><a href="#streets" class="nav-link" data-section="streets">Streets</a></li>
                 <li><a href="#strassens" class="nav-link" data-section="strassens">Search</a></li>
             </ul>
             
@@ -899,6 +921,18 @@
                 <p>Whether it's simple tasks like ordering groceries or tracking campground reservations, or more complex scenarios like planning and coordinating a group trip — both the floor and the ceiling of human productivity on the web needs to be uplifted.</p>
                 <p>We are building AI agents that can reliably do everyday digital tasks for you on the web, towards an AI chief-of-staff for everyone. Our mission is to build the best AI assistants to make space for the meaningful things and create yutori in your life.</p>
             </div>
+        </div>
+    </section>
+
+    <!-- Streets Section -->
+    <section id="streets" class="content-section">
+        <div class="container" style="padding: 0; max-width: 100%; height: 100vh;">
+            <iframe 
+                id="streets-iframe"
+                src="/travel/" 
+                style="width: 100%; height: 100%; border: none; display: block;"
+                title="PiText Travel - Streets">
+            </iframe>
         </div>
     </section>
 
@@ -1048,6 +1082,14 @@
             
             if (targetSection) {
                 targetSection.classList.add('active');
+                
+                // Special handling for Streets section to ensure iframe loads
+                if (sectionId === 'streets') {
+                    const iframe = document.getElementById('streets-iframe');
+                    if (iframe && !iframe.src) {
+                        iframe.src = '/travel/';
+                    }
+                }
             }
             
             if (targetLink) {
