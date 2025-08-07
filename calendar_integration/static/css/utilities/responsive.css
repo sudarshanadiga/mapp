@@ -1,0 +1,240 @@
+/* ===============================================
+   Responsive Design Utilities
+   =============================================== */
+
+/* Mobile-first responsive breakpoints */
+@media (max-width: 640px) {
+  /* Small mobile devices */
+  .container {
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    height: 100vh; /* Ensure full height */
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    order: 2;
+    border-right: none;
+    border-bottom: 1px solid var(--gray-200);
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+  
+  .main-content {
+    order: 1;
+    padding: var(--spacing-md);
+    height: 0; /* Allow flex to calculate height */
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  .calendar-header {
+    flex-direction: column;
+    gap: calc(var(--spacing-sm) * 0.7);
+    text-align: center;
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+  
+  .calendar-header h1 {
+    font-size: calc(var(--font-size-xl) * 0.7);
+  }
+  
+  #calendar {
+    margin-top: var(--spacing-sm);
+    height: 0; /* Allow flex to calculate height */
+    flex: 1; /* Take remaining space */
+    min-height: 0; /* Allow shrinking */
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  /* Modal adjustments for mobile */
+  .calendar-modal {
+    width: 95vw;
+    max-height: 90vh;
+    margin: var(--spacing-md);
+  }
+  
+  .tab-pane {
+    padding: var(--spacing-md);
+  }
+  
+  .modal-footer {
+    padding: var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+  
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Tablets and small laptops */
+  .container {
+    flex-direction: column;
+    height: 100vh; /* Ensure full height */
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    order: 2;
+    border-right: none;
+    border-bottom: 1px solid var(--gray-200);
+    padding: var(--spacing-lg);
+    gap: var(--spacing-lg);
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+  
+  .main-content {
+    order: 1;
+    padding: var(--spacing-lg);
+    height: 0; /* Allow flex to calculate height */
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  .user-profile {
+    flex-direction: row;
+    text-align: left;
+  }
+  
+  #calendar-filters {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: var(--spacing-md) !important;
+  }
+  
+  #calendar-filters::before {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  #weather-location-container {
+    flex-direction: row;
+    gap: var(--spacing-sm);
+  }
+  
+  #weather-location-input {
+    width: auto;
+    flex: 1;
+  }
+  
+  .sidebar-footer {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Medium screens */
+  .sidebar {
+    width: 250px;
+  }
+  
+  .main-content {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Large screens */
+  .container {
+    max-width: 1400px;
+    height: 100vh; /* Ensure full height */
+    overflow: hidden; /* Prevent overflow */
+  }
+  
+  .sidebar {
+    width: 280px;
+  }
+  
+  .main-content {
+    padding: var(--spacing-xl) var(--spacing-lg);
+    height: 0; /* Allow flex to calculate height */
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent overflow */
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar,
+  .calendar-header,
+  .fc-toolbar,
+  .modal-footer {
+    display: none !important;
+  }
+  
+  .container {
+    flex-direction: column;
+    box-shadow: none;
+    max-width: none;
+    height: auto; /* Allow natural height for printing */
+    overflow: visible; /* Allow overflow for printing */
+  }
+  
+  .main-content {
+    padding: 0;
+    height: auto; /* Allow natural height for printing */
+    overflow: visible; /* Allow overflow for printing */
+  }
+  
+  #calendar {
+    border: 1px solid var(--gray-300);
+    height: auto; /* Allow natural height for printing */
+    overflow: visible; /* Allow overflow for printing */
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .fc-event {
+    border-width: 2px !important;
+  }
+  
+  .fc-button {
+    border-width: 2px !important;
+  }
+  
+  .sidebar {
+    border-right-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .notification {
+    animation: none !important;
+  }
+  
+  .fc-event:hover {
+    transform: none !important;
+  }
+  
+  .btn:hover {
+    transform: none !important;
+  }
+}

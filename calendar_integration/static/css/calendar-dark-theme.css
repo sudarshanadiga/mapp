@@ -1,0 +1,259 @@
+/* ───────────────────────────────────────────────────────────────
+   Pitext Calendar – Dark Theme v2  (2025‑07‑01)
+   • Removes purple gradient side‑bars by forcing a flat black body background
+   • Inverts calendar grid (white cells, black text)
+   • Keeps yellow accent + dark panels elsewhere
+   Place file at: calendar_integration/static/css/calendar-dark-theme.css
+   
+   NOTE: Dark theme is disabled by default. To enable, uncomment the CSS below.
+   ─────────────────────────────────────────────────────────────── */
+
+/* Dark theme is disabled by default. Uncomment the following block to enable:
+:root {
+  --pitext-accent: #facf0f;          
+  --pitext-bg: #000000;              
+  --pitext-bg-alt: #0e0e0e;          
+  --pitext-text-dark: #000000;
+  --pitext-text-light: #ffffff;
+  --pitext-border-radius: 8px;
+  --pitext-glow: 0 0 8px var(--pitext-accent);
+}
+
+html, body, #app, .page-wrapper, .layout, .container-fluid {
+  background: var(--pitext-bg) !important;
+  color: var(--pitext-text-light);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.fc-toolbar-title {
+  color: var(--pitext-accent);
+  font-weight: 600;
+}
+
+.fc-button {
+  background: #5667d7;                  
+  color: var(--pitext-text-light);
+  border: none;
+  border-radius: var(--pitext-border-radius);
+  padding: 0.35rem 0.75rem;
+  box-shadow: var(--pitext-glow);
+  transition: filter .15s ease-in;
+}
+.fc-button-primary:not(:disabled):hover,
+.fc-button-primary:not(:disabled):focus {
+  filter: brightness(1.1);
+}
+
+.fc-daygrid-day, .fc-timegrid-col {
+  background-color: #ffffff;
+  color: var(--pitext-text-dark);
+}
+
+.fc-day-other {
+  background-color: #fafafa;            
+  color: var(--pitext-text-dark) !important;
+}
+
+.fc-col-header-cell {
+  background-color: #ffffff;
+  color: var(--pitext-text-dark);
+  font-weight: 600;
+}
+
+.fc-daygrid-day-number, .fc-timegrid-slot-label {
+  color: var(--pitext-text-dark) !important;
+}
+
+.fc-timegrid-divider,
+.fc-timegrid-divider-cushion,
+.fc-daygrid-day-events,
+.fc-col-header-cell-cushion,
+.fc-timegrid-axis-cushion {
+  color: var(--pitext-text-dark) !important;
+  font-weight: 600 !important;
+}
+
+.fc-event {
+  background-color: var(--pitext-accent);
+  color: var(--pitext-text-dark);
+  border: none;
+  border-radius: var(--pitext-border-radius);
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.fc-event[data-type="echo"] {
+  background-image: linear-gradient(135deg, var(--pitext-accent) 0%, #ff758c 100%);
+  color: var(--pitext-text-light);
+}
+
+.fc-event[data-type="fun"],
+.event-fun {
+  background-color: #e91e63;
+  color: #fff;
+}
+
+.fc-event[data-type="weather-warning"] {
+  background-color: #ffb3b3 !important;
+  border-color: #ff8080 !important;
+  color: #d00000 !important;
+  opacity: 0.8;
+}
+
+.modal-content {
+  background: rgba(14,14,14,0.96);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--pitext-accent);
+  border-radius: calc(var(--pitext-border-radius) * 1.25);
+  color: var(--pitext-text-light);
+}
+.modal-header .modal-title {
+  color: var(--pitext-accent);
+}
+.btn-primary {
+  background: var(--pitext-accent);
+  border: none;
+  color: var(--pitext-text-dark);
+}
+.btn-primary:hover { filter: brightness(1.1); }
+
+.mermaid svg .cluster.dateBox > rect,
+.mermaid svg .node rect {
+  fill: var(--pitext-bg-alt) !important;
+  stroke: var(--pitext-accent) !important;
+  stroke-width: 1.6px;
+  rx: var(--pitext-border-radius); ry: var(--pitext-border-radius);
+}
+.mermaid svg .edgePath path { stroke: var(--pitext-accent) !important; }
+
+.mermaid svg .node rect {
+  fill: #fff !important;
+  stroke: #facf0f !important;
+  stroke-width: 1.6px;
+  rx: var(--pitext-border-radius);
+  ry: var(--pitext-border-radius);
+}
+.mermaid .nodeLabel {
+  fill: #222 !important;
+  color: #222 !important;
+  font-weight: 600;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb {
+  background: var(--pitext-accent);
+  border-radius: 4px;
+}
+
+.text-accent   { color: var(--pitext-accent) !important; }
+.bg-panel      { background: var(--pitext-bg-alt) !important; }
+.rounded-soft  { border-radius: var(--pitext-border-radius) !important; }
+.shadow-glow   { box-shadow: var(--pitext-glow) !important; }
+
+#calendar-filters {
+    border-color: var(--pitext-accent) !important;
+    background: rgba(250, 207, 15, 0.08) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+#calendar-filters::before {
+    color: var(--pitext-accent) !important;
+}
+#calendar-filters label {
+    color: var(--pitext-accent) !important;
+}
+#calendar-filters label:hover {
+    color: #fff !important;
+    text-shadow: 0 0 4px var(--pitext-accent);
+}
+#calendar-filters input[type="checkbox"] {
+    accent-color: var(--pitext-accent) !important;
+    filter: brightness(1.2);
+}
+
+.fc-scrollgrid-section > * {
+  border-left: 1px solid var(--fc-border-color) !important;
+}
+
+.sleep-toggle-bar {
+  background: #f0f0f0 !important;
+  border-color: #ccc !important;
+  color: #333 !important;
+}
+
+.early-sleep-toggle-bar {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.late-sleep-toggle-bar {
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.sleep-toggle-bar:hover {
+  background: #e0e0e0 !important;
+  color: #000 !important;
+  border-color: #999 !important;
+}
+
+/* ─── Restore horizontal grid lines in timeGrid views (Dark Theme) ────────── */
+.fc-theme-standard .fc-timegrid-slot,
+.fc-theme-standard .fc-timegrid-slot-minor {
+  /* Draw the top edge of every row except the very first one */
+  border-top: 1px solid #444 !important;
+}
+
+.fc-theme-standard .fc-timegrid-slot:last-child {
+  /* Give the very last visible row a bottom edge too */
+  border-bottom: 1px solid #444 !important;
+}
+
+/* Make sure our collapse bars show the same separators */
+.fc-collapse-toggle {
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
+}
+
+.fc-list {
+  background-color: #ffffff;
+  color: var(--pitext-text-dark);
+}
+
+.fc-list-table th {
+  background-color: #f5f5f5;
+  color: var(--pitext-text-dark);
+}
+
+.fc-list-day-cushion {
+  background-color: #f0f0f0;
+  color: var(--pitext-text-dark);
+}
+
+.fc-list-event:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.fc-list-event.event-fun {
+  background-color: rgba(233, 30, 99, 0.15);
+}
+
+.fc-list-event.event-other {
+  background-color: #e8f5e9;
+}
+
+.fc-list-event:not(.event-fun):not(.event-other) {
+  background-color: rgba(33, 150, 243, 0.15);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    min-height: 100vh;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+html, body {
+    margin: 0 !important;
+    padding: 0;
+    height: 100%;
+    background: #000;
+}

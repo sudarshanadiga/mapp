@@ -1,0 +1,253 @@
+/* ===============================================
+   Modal Styles
+   =============================================== */
+.calendar-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: 0;
+  border: none;
+  max-width: 600px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+  z-index: var(--z-modal);
+  font-family: var(--font-family);
+  /* Ensure modal is always centered */
+  margin: 0;
+  /* Fallback for older browsers */
+  -webkit-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  /* Prevent any inherited positioning */
+  position: fixed !important;
+}
+
+.calendar-modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  /* Ensure backdrop covers entire viewport */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Close button */
+.close-btn {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--gray-500);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  margin: 0;
+  padding: 0;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: none;
+  border: none;
+  color: var(--gray-600);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  position: relative;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+  background: var(--white);
+  color: var(--gray-800);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  background: var(--white);
+  border-bottom-color: var(--primary-color);
+}
+
+/* Tab content */
+.tab-pane {
+  display: none;
+  padding: var(--spacing-xl);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+/* Echo indicator dot */
+.echo-dot {
+  display: none; /* Hide by default */
+  width: 8px;
+  height: 8px;
+  background: var(--accent-green);
+  border-radius: 50%;
+  margin-left: var(--spacing-xs);
+  animation: pulse 2s infinite;
+}
+
+.echo-dot.active {
+  display: inline-block; /* Show only when active */
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Modal footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+}
+
+/* Echo flowchart container */
+#echo-flowchart {
+  min-height: 300px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--gray-200);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Mermaid diagram styling */
+#echo-flowchart .mermaid {
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Center the SVG content within the flowchart */
+#echo-flowchart svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calendar-modal {
+    width: 95vw;
+    max-height: 90vh;
+    /* Ensure centering on mobile */
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    -webkit-transform: translate(-50%, -50%) !important;
+    -ms-transform: translate(-50%, -50%) !important;
+  }
+  
+  .tab-pane {
+    padding: var(--spacing-lg);
+  }
+  
+  .modal-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+  
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* Additional centering fixes for different screen sizes */
+@media (max-width: 480px) {
+  .calendar-modal {
+    width: 98vw;
+    max-height: 95vh;
+    /* Force centering on very small screens */
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}
+
+/* Ensure modal is always on top and properly centered */
+.calendar-modal {
+  z-index: 9999 !important;
+  /* Force centering with multiple approaches */
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  -webkit-transform: translate(-50%, -50%) !important;
+  -ms-transform: translate(-50%, -50%) !important;
+  /* Prevent any margin/padding interference */
+  margin: 0 !important;
+  padding: 0 !important;
+  /* Ensure proper stacking context */
+  isolation: isolate;
+}
+
+/* Additional centering for dialog element specifically */
+dialog.calendar-modal {
+  /* Override any browser defaults */
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Ensure body doesn't interfere with modal positioning */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* Fallback for browsers that don't support :has() */
+body.modal-open {
+  overflow: hidden;
+} 

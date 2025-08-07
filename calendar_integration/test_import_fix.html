@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Fix Test</title>
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='static/css/calendar.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: #f5f5f7;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.08);
+            display: flex;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 32px 32px 32px;
+            min-height: 100vh;
+            height: 100vh;
+        }
+        #calendar {
+            flex: 1;
+            min-height: 600px;
+            height: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: visible;
+            margin: 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .fc {
+            height: 100% !important;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .fc-view-harness {
+            height: 100% !important;
+            flex: 1 !important;
+        }
+        .fc-scroller {
+            height: 100% !important;
+        }
+        .fc-scroller-liquid {
+            height: 100% !important;
+        }
+        #test-results {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-results">
+        <div>Testing imports...</div>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <header class="calendar-header">
+                <h1>Calendar</h1>
+            </header>
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/luxon3@6.1.10/index.global.min.js'></script>
+    
+    <script type="module">
+        // Test the imports
+        const resultsDiv = document.getElementById('test-results');
+        
+        async function testImports() {
+            try {
+                // Test API import
+                const { api } = await import('./static/js/api.js');
+                resultsDiv.innerHTML += '<div style="color: green;">✓ API import successful</div>';
+                
+                // Test UI import
+                const { ui } = await import('./static/js/ui.js');
+                resultsDiv.innerHTML += '<div style="color: green;">✓ UI import successful</div>';
+                
+                // Test Weather import
+                const { initializeWeather } = await import('./static/js/weather.js');
+                resultsDiv.innerHTML += '<div style="color: green;">✓ Weather import successful</div>';
+                
+                // Test Weather Now Indicator import
+                const { initializeWeatherNowIndicator } = await import('./static/js/weather-now-indicator.js');
+                resultsDiv.innerHTML += '<div style="color: green;">✓ Weather Now Indicator import successful</div>';
+                
+                resultsDiv.innerHTML += '<div style="color: blue; margin-top: 10px;">All imports successful! Calendar should work.</div>';
+                
+                // Initialize calendar
+                const calendarEl = document.getElementById('calendar');
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    plugins: [ FullCalendar.luxon3 ],
+                    initialView: 'timeGridWeek',
+                    height: '100%',
+                    contentHeight: 'auto',
+                    aspectRatio: 1.8,
+                    dayMaxEvents: true,
+                    firstDay: 1,
+                    timeZone: 'America/New_York',
+                    slotDuration: '01:00:00',
+                    slotLabelInterval: '01:00',
+                    snapDuration: '00:30:00',
+                    allDaySlot: true,
+                    allDayText: 'all-day',
+                    defaultTimedEventDuration: '00:30:00',
+                    forceEventDuration: true,
+                    nowIndicator: true,
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'timeGridWeek,timeGridDay,dayGridMonth,listWeek'
+                    },
+                    events: [
+                        {
+                            title: 'Test Event',
+                            start: new Date(),
+                            end: new Date(new Date().getTime() + 2 * 60 * 60 * 1000),
+                            backgroundColor: '#e91e63',
+                            textColor: '#fff'
+                        }
+                    ]
+                });
+                
+                calendar.render();
+                resultsDiv.innerHTML += '<div style="color: green;">✓ Calendar rendered successfully</div>';
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<div style="color: red;">✗ Import error: ${error.message}</div>`;
+                console.error('Import test failed:', error);
+            }
+        }
+        
+        testImports();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,223 @@
+/* Ensure FullCalendar uses consistent 50px height for all time slots */
+:root {
+  --fc-slot-h: 50px;
+}
+
+/* Hide scroll arrows for all-day and day header rows in week view */
+.fc-timegrid-all-day .fc-scrollgrid-shrink .fc-scrollgrid-sync-inner,
+.fc-timegrid-all-day .fc-scrollgrid-shrink .fc-scrollgrid-sync-inner .fc-scroller,
+.fc-timegrid .fc-scrollgrid-section-header .fc-scrollgrid-shrink .fc-scrollgrid-sync-inner,
+.fc-timegrid .fc-scrollgrid-section-header .fc-scrollgrid-shrink .fc-scrollgrid-sync-inner {
+  display: none !important;
+}
+
+/* ===============================================
+   FullCalendar Grid Styles - Working WITH Native Rendering
+   =============================================== */
+
+/* Let FullCalendar handle the base borders - don't override everything */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  /* Keep FullCalendar's default borders */
+}
+
+/* Just style the borders that exist, don't remove and re-add */
+.fc-theme-standard .fc-scrollgrid {
+  border-color: var(--gray-300);
+}
+
+.fc-theme-standard .fc-scrollgrid td,
+.fc-theme-standard .fc-scrollgrid th {
+  border-color: var(--gray-200);
+}
+
+/* Ensure time slots have consistent height with border-box sizing */
+.fc-timegrid-slot {
+  height: var(--fc-slot-h) !important;
+  min-height: var(--fc-slot-h) !important;
+  box-sizing: border-box !important;
+}
+
+/* Style the time slot borders that FullCalendar provides */
+.fc-theme-standard .fc-timegrid-slot {
+  border-color: var(--gray-200) !important;
+}
+
+.fc-theme-standard .fc-timegrid-slot-minor {
+  border-color: var(--gray-100) !important;
+}
+
+/* Ensure minor slots match the same height as major slots with border-box */
+.fc-timegrid-slot-minor {
+  height: var(--fc-slot-h) !important;
+  min-height: var(--fc-slot-h) !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure time labels match slot height and align properly with border-box */
+.fc-timegrid-slot-label {
+  height: var(--fc-slot-h) !important;
+  line-height: var(--fc-slot-h) !important;
+  font-size: 14px !important;
+  color: var(--gray-600) !important;
+  font-weight: 500 !important;
+  padding: 0 8px !important;
+  vertical-align: middle !important;
+  background: var(--gray-50);
+  box-sizing: border-box !important;
+}
+
+/* Style column borders */
+.fc-theme-standard .fc-timegrid-col:not(:last-child) {
+  border-right-color: var(--gray-200) !important;
+}
+
+/* Cell hover effect */
+.fc-timegrid-col-events {
+  position: relative;
+  z-index: 1;
+}
+
+.fc-timegrid-col-events::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.fc-timegrid-col-events:hover::before {
+  background: var(--primary-color-light, #e3eafe) !important;
+  box-shadow: 0 0 0 2px var(--primary-color, #4f6bed) inset !important;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Day headers */
+.fc-col-header-cell {
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--gray-300) !important;
+  padding: 8px;
+  transition: var(--transition-fast);
+}
+
+/* Time axis */
+.fc-timegrid-axis {
+  border-right-color: var(--gray-200) !important;
+}
+
+/* Toolbar styling */
+.fc-toolbar {
+  background: var(--white);
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
+}
+
+.fc-toolbar-title {
+  font-size: 1.05rem !important;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+/* Day header content */
+.fc-col-header-cell-cushion {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--gray-700) !important;
+}
+
+/* Today indicator styling */
+.fc-day-today {
+  background: rgba(102, 126, 234, 0.05) !important;
+}
+
+.fc-day-today .fc-col-header-cell {
+  background: rgba(102, 126, 234, 0.1) !important;
+  border-bottom-color: var(--primary-color) !important;
+}
+
+.fc-day-today .fc-col-header-cell-cushion {
+  color: var(--primary-color) !important;
+  font-weight: 700 !important;
+}
+
+/* Current time indicator */
+.fc-timegrid-now-indicator-line {
+  border-color: var(--primary-color) !important;
+  border-width: 2px !important;
+  z-index: 5;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border-color: var(--primary-color) !important;
+  border-width: 4px !important;
+  z-index: 5;
+}
+
+/* All-day section */
+.fc-timegrid-all-day-slot {
+  background: var(--gray-50) !important;
+  border-bottom: 2px solid var(--gray-300) !important;
+  min-height: 2em;
+}
+
+/* Focus states for accessibility */
+.fc-button:focus,
+.fc-event:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Ensure time slots can be clicked */
+.fc-timegrid-col-bg {
+  cursor: pointer;
+}
+
+/* Highlight effect */
+.fc-highlight {
+  background: var(--primary-color-light, #e3eafe) !important;
+  opacity: 0.3;
+}
+
+/* FALLBACK: Gradient pattern aligned with slot height including borders */
+.fc-timegrid-slots {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent var(--fc-slot-h),
+    var(--gray-200) var(--fc-slot-h),
+    var(--gray-200) calc(var(--fc-slot-h) + 1px)
+  );
+  background-size: 100% calc(var(--fc-slot-h) + 1px);
+  background-position: 0 0;
+}
+
+/* For browsers that support CSS custom properties in gradients */
+@supports (background: linear-gradient(var(--gray-200), var(--gray-200))) {
+  .fc-timegrid-slots {
+    position: relative;
+  }
+  
+  .fc-timegrid-slots::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Align gradient with actual slot height including borders */
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent var(--fc-slot-h),
+      var(--gray-200) var(--fc-slot-h),
+      var(--gray-200) calc(var(--fc-slot-h) + 1px)
+    );
+    background-size: 100% calc(var(--fc-slot-h) + 1px);
+    pointer-events: none;
+    z-index: 1;
+  }
+}

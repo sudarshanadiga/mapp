@@ -1,5 +1,6 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+starlette>=0.32.0
 openai==1.12.0
 anthropic==0.18.1
 python-dotenv==1.0.0

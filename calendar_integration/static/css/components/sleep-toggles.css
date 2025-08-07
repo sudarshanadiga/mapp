@@ -1,0 +1,122 @@
+/* Sleep Toggle Bar Styles */ /* ===============================================
+   Sleep Toggle Bar Styles - Table Row Approach
+   =============================================== */
+
+/* Sleep toggle row styling with border-box sizing */
+.sleep-toggle-row {
+  display: table-row !important;
+  height: var(--fc-slot-h) !important; /* Same height as time slots */
+  min-height: var(--fc-slot-h) !important;
+  background: var(--gray-50) !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+  transition: var(--transition-fast);
+  box-sizing: border-box !important;
+}
+
+/* Sleep toggle cell styling with border-box */
+.sleep-toggle-cell {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  height: 100% !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+}
+
+/* Sleep toggle bar styling */
+.sleep-toggle-bar {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  background-color: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  transition: var(--transition-fast);
+  user-select: none;
+  justify-content: flex-start;
+  padding-left: 20px;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Early toggle - positioned before 6 AM */
+.early-sleep-toggle-row {
+  border-top: 2px solid var(--gray-300) !important;
+  border-bottom: 1px solid var(--gray-200) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Late toggle - positioned after 9 PM */
+.late-sleep-toggle-row {
+  border-top: 1px solid var(--gray-200) !important;
+  border-bottom: 2px solid var(--gray-300) !important;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+}
+
+.sleep-toggle-bar:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-800);
+}
+
+/* Ensure toggles work properly within FullCalendar's grid structure with border-box */
+.fc-timegrid-body .sleep-toggle-row {
+  /* Ensure it appears as a proper table row */
+  display: table-row !important;
+  height: var(--fc-slot-h) !important;
+  min-height: var(--fc-slot-h) !important;
+  box-sizing: border-box !important;
+}
+
+.fc-timegrid-body .sleep-toggle-cell {
+  /* Ensure cell spans properly */
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Dark theme support */
+.calendar-dark-theme .sleep-toggle-row,
+body.dark-theme .sleep-toggle-row {
+  background: #2a2a2a !important;
+  border-color: #555 !important;
+}
+
+.calendar-dark-theme .sleep-toggle-bar,
+body.dark-theme .sleep-toggle-bar {
+  background: #2a2a2a;
+  color: #ccc;
+  border-color: #555;
+}
+
+.calendar-dark-theme .sleep-toggle-bar:hover,
+body.dark-theme .sleep-toggle-bar:hover {
+  background: #333;
+  color: #fff;
+}
+
+/* Ensure proper spacing and visibility */
+.sleep-toggle-row:first-child {
+  border-top: none !important;
+}
+
+.sleep-toggle-row:last-child {
+  border-bottom: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sleep-toggle-bar {
+    font-size: 12px;
+    padding-left: 15px;
+  }
+  
+  .sleep-toggle-row {
+    height: calc(var(--fc-slot-h) * 0.9) !important;
+    min-height: calc(var(--fc-slot-h) * 0.9) !important;
+  }
+}

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Toggles Test</title>
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/main.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/main.min.css' rel='stylesheet' />
+    <link href='/calendar/static/css/calendar.css' rel='stylesheet' />
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #calendar {
+            height: 600px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sleep Toggles Test</h1>
+    <p>This page tests the sleep toggle bars functionality. You should see toggle bars at the top and bottom of the calendar in week/day views.</p>
+    
+    <div id="calendar"></div>
+
+    <script src='https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/luxon3@6.1.10/index.global.min.js'></script>
+    
+    <script type="module">
+        // Import the sleep toggles module
+        import { initializeSleepToggles } from '/calendar/static/js/calendar/sleep-toggles.js';
+        
+        // Create a simple calendar
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            plugins: [ FullCalendar.luxon3 ],
+            initialView: 'timeGridWeek',
+            height: 'auto',
+            timeZone: 'America/New_York',
+            slotDuration: '01:00:00',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'timeGridWeek,timeGridDay,dayGridMonth,listWeek'
+            },
+            events: [
+                {
+                    title: 'Test Event',
+                    start: new Date(),
+                    end: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours later
+                    backgroundColor: '#2196f3'
+                }
+            ]
+        });
+        
+        // Render the calendar
+        calendar.render();
+        
+        // Initialize sleep toggles after calendar is rendered
+        setTimeout(() => {
+            console.log('Initializing sleep toggles...');
+            initializeSleepToggles(calendar);
+        }, 1000);
+        
+        // Make calendar globally available for debugging
+        window.calendar = calendar;
+    </script>
+</body>
+</html> 

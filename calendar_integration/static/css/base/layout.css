@@ -1,0 +1,143 @@
+/* ===============================================
+   Layout & Container Styles - FIXED
+   =============================================== */
+
+/* FIXED: Less aggressive reset */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--gray-50);
+  overflow-x: hidden; /* Only hide horizontal overflow */
+  overflow-y: auto; /* Allow vertical scrolling */
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+  background: var(--white);
+  min-height: 100vh; /* CHANGED: Use min-height instead of fixed height */
+  box-shadow: 0 0 20px rgba(0,0,0,0.08);
+  display: flex;
+  overflow: visible; /* CHANGED: Allow overflow for proper sizing */
+}
+
+/* Main content area - FIXED */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 32px 32px 32px; /* Reduced top padding from 17px by another 30% */
+  min-height: 100vh; /* CHANGED: Use min-height */
+  overflow: visible; /* CHANGED: Allow overflow */
+  position: relative;
+  min-width: 0;
+}
+
+/* Header styles - REDUCED BY 30% MORE (60% total reduction) */
+header.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;              /* was 7px */
+  padding: 0 0 4px 0;              /* was 5.6px */
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
+  position: relative;
+}
+
+header.calendar-header h1 {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 2.2rem; /* Increased for better visibility */
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Calendar container - COMPLETELY FIXED */
+#calendar {
+  flex: 1;
+  min-height: 600px; /* ADDED: Minimum height for FullCalendar */
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: visible; /* CHANGED: Allow overflow */
+  margin: 0;
+  padding: 0;
+  position: relative; /* REMOVED: Aggressive flex settings that interfere with FullCalendar */
+}
+
+/* SIMPLIFIED: Less aggressive FullCalendar overrides */
+#calendar .fc {
+  height: 100%;
+  font-family: inherit;
+}
+
+/* Ensure toolbar doesn't interfere with calendar height */
+#calendar .fc-toolbar {
+  flex-shrink: 0;
+  background: var(--white);
+  padding: 4px 8px;                /* was 16px 20px */
+  border-bottom: 1px solid var(--gray-200);
+}
+
+/* Import Google Calendar button */
+#import-google-calendar {
+  padding: 10px 20px;
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+}
+
+#import-google-calendar:hover:not(:disabled) {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+#import-google-calendar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Sidebar Styles */
+.sidebar label {
+  color: var(--primary-color);
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    min-height: 100vh; /* CHANGED: Use min-height */
+  }
+  
+  .main-content {
+    order: 1;
+    padding: 16px;
+    min-height: 0; /* CHANGED: Allow shrinking on mobile */
+    flex: 1;
+  }
+  
+  .sidebar {
+    order: 2;
+    height: auto;
+    max-height: 30vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  
+  #calendar {
+    min-height: 400px; /* CHANGED: Smaller min-height on mobile */
+    flex: 1;
+  }
+}

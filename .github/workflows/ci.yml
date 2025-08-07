@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update submodules
+        run: git submodule update --init --recursive
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - uses: actions/cache@v3
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - name: Install dependencies
+        run: pnpm install
+        
+      - name: Build projects
+        run: |
+          echo "Building projects..."
+          # Add build commands for other projects if needed 

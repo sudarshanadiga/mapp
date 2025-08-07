@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Height Fix Test</title>
+    
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/index.global.min.css' rel='stylesheet' />
+    
+    <!-- Custom CSS -->
+    <link href='static/css/base/reset.css' rel='stylesheet' />
+    <link href='static/css/base/variables.css' rel='stylesheet' />
+    <link href='static/css/base/layout.css' rel='stylesheet' />
+    <link href='static/css/calendar.css' rel='stylesheet' />
+    <link href='static/css/components/calendar-grid.css' rel='stylesheet' />
+    <link href='static/css/components/calendar-toolbar.css' rel='stylesheet' />
+    <link href='static/css/components/events.css' rel='stylesheet' />
+    <link href='static/css/components/sleep-toggles.css' rel='stylesheet' />
+    <link href='static/css/components/buttons.css' rel='stylesheet' />
+    <link href='static/css/components/forms.css' rel='stylesheet' />
+    <link href='static/css/components/modal.css' rel='stylesheet' />
+    <link href='static/css/components/notifications.css' rel='stylesheet' />
+    <link href='static/css/components/sidebar.css' rel='stylesheet' />
+    <link href='static/css/components/filters.css' rel='stylesheet' />
+    <link href='static/css/themes/month-view.css' rel='stylesheet' />
+    <link href='static/css/utilities/animations.css' rel='stylesheet' />
+    <link href='static/css/utilities/helpers.css' rel='stylesheet' />
+    <link href='static/css/utilities/responsive.css' rel='stylesheet' />
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .test-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        .test-header h1 {
+            margin: 0;
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .test-header p {
+            margin: 10px 0 0 0;
+            color: #666;
+        }
+        
+        .test-content {
+            padding: 20px;
+        }
+        
+        #calendar {
+            height: 600px;
+            margin-top: 20px;
+        }
+        
+        .test-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .test-controls button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .test-controls button:hover {
+            background: #f0f0f0;
+        }
+        
+        .test-controls button.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .test-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Slot Height Fix Test</h1>
+            <p>Testing the border-box sizing and CSS variable adjustments for consistent slot heights</p>
+        </div>
+        
+        <div class="test-content">
+            <div class="test-controls">
+                <button onclick="testSlotHeight(50)">Set 50px Height</button>
+                <button onclick="testSlotHeight(60)">Set 60px Height</button>
+                <button onclick="testSlotHeight(40)">Set 40px Height</button>
+                <button onclick="resetSlotHeight()">Reset to Default</button>
+                <button onclick="measureActualHeight()">Measure Actual Height</button>
+            </div>
+            
+            <div class="test-info">
+                <strong>Test Instructions:</strong>
+                <ul>
+                    <li>Click the buttons to change slot height and observe the changes</li>
+                    <li>Check that borders align properly with the grid</li>
+                    <li>Verify that sleep toggles maintain the same height as slots</li>
+                    <li>Look for any 1px drift between the axis and grid</li>
+                </ul>
+            </div>
+            
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.10/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/index.global.min.js'></script>
+    
+    <!-- Custom JS -->
+    <script type="module">
+        import { initializeSlotHeightAdjustment, setSlotHeight, resetSlotHeight } from './static/js/utils/slot-height-adjuster.js';
+        
+        // Make functions available globally for testing
+        window.testSlotHeight = setSlotHeight;
+        window.resetSlotHeight = resetSlotHeight;
+        
+        window.measureActualHeight = function() {
+            const slotElement = document.querySelector('.fc-timegrid-slot');
+            if (slotElement) {
+                const height = slotElement.offsetHeight;
+                alert(`Actual slot height: ${height}px`);
+                console.log('Slot height measurement:', height);
+            } else {
+                alert('No slot element found');
+            }
+        };
+        
+        // Initialize calendar
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendarEl = document.getElementById('calendar');
+            
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                height: 'auto',
+                dayMaxEvents: true,
+                timeZone: 'America/New_York',
+                slotDuration: '01:00:00',
+                slotLabelInterval: '01:00',
+                snapDuration: '00:30:00',
+                slotMinTime: '06:00:00',
+                slotMaxTime: '22:00:00',
+                allDaySlot: true,
+                allDayText: 'all-day',
+                defaultTimedEventDuration: '00:30:00',
+                forceEventDuration: true,
+                slotEventOverlap: false,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridWeek,timeGridDay,dayGridMonth,listWeek'
+                },
+                editable: true,
+                eventDurationEditable: true,
+                eventStartEditable: true,
+                selectable: true,
+                selectMirror: true
+            });
+            
+            calendar.render();
+            
+            // Initialize slot height adjustment
+            setTimeout(() => {
+                initializeSlotHeightAdjustment(calendar);
+            }, 500);
+            
+            // Add some test events
+            calendar.addEvent({
+                title: 'Test Event 1',
+                start: new Date().setHours(9, 0, 0, 0),
+                end: new Date().setHours(10, 0, 0, 0),
+                backgroundColor: '#2196f3'
+            });
+            
+            calendar.addEvent({
+                title: 'Test Event 2',
+                start: new Date().setHours(14, 0, 0, 0),
+                end: new Date().setHours(16, 0, 0, 0),
+                backgroundColor: '#e91e63'
+            });
+        });
+    </script>
+</body>
+</html> 

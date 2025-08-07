@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Filtering Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        .checkbox-group label {
+            margin-right: 15px;
+        }
+        .event-list {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 3px;
+        }
+        .event-item {
+            padding: 5px;
+            margin: 2px 0;
+            border-radius: 3px;
+        }
+        .event-fun { background-color: #e91e63; color: white; }
+        .event-work { background-color: #2196f3; color: white; }
+        .event-other { background-color: #4caf50; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Calendar Filtering Test</h1>
+    
+    <div class="test-section">
+        <h2>Event Type Filters</h2>
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="show-fun" checked> Fun
+            </label>
+            <label>
+                <input type="checkbox" id="show-work" checked> Work
+            </label>
+            <label>
+                <input type="checkbox" id="show-other" checked> Other
+            </label>
+        </div>
+        
+        <div class="event-list" id="event-display">
+            <p>Events will appear here when loaded...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="addTestEvents()">Add Test Events</button>
+        <button onclick="clearEvents()">Clear Events</button>
+        <button onclick="testFiltering()">Test Filtering</button>
+    </div>
+
+    <script>
+        // Mock events for testing
+        const testEvents = [
+            { id: '1', title: 'Fun Event 1', eventType: 'fun', start_time: '2024-01-15T10:00:00' },
+            { id: '2', title: 'Work Meeting', eventType: 'work', start_time: '2024-01-15T14:00:00' },
+            { id: '3', title: 'Other Task', eventType: 'other', start_time: '2024-01-16T09:00:00' },
+            { id: '4', title: 'Fun Event 2', eventType: 'fun', start_time: '2024-01-16T16:00:00' },
+            { id: '5', title: 'Work Call', eventType: 'work', start_time: '2024-01-17T11:00:00' },
+            { id: '6', title: 'Another Other', eventType: 'other', start_time: '2024-01-17T15:00:00' }
+        ];
+
+        // Filter state
+        let showFun = true;
+        let showWork = true;
+        let showOther = true;
+        let allEvents = [];
+
+        // Initialize checkboxes
+        function initializeCheckboxes() {
+            document.getElementById('show-fun').addEventListener('change', e => {
+                showFun = e.target.checked;
+                filterAndDisplayEvents();
+            });
+            document.getElementById('show-work').addEventListener('change', e => {
+                showWork = e.target.checked;
+                filterAndDisplayEvents();
+            });
+            document.getElementById('show-other').addEventListener('change', e => {
+                showOther = e.target.checked;
+                filterAndDisplayEvents();
+            });
+        }
+
+        // Filter events based on checkboxes
+        function getFilteredEvents(events) {
+            return events.filter(ev => {
+                const eventType = (ev.eventType || 'other').toLowerCase();
+                
+                if (eventType === "work" && showWork) return true;
+                if (eventType === "fun" && showFun) return true;
+                if (eventType === "other" && showOther) return true;
+                
+                return false;
+            });
+        }
+
+        // Display filtered events
+        function filterAndDisplayEvents() {
+            const filtered = getFilteredEvents(allEvents);
+            const display = document.getElementById('event-display');
+            
+            display.innerHTML = filtered.map(event => {
+                const eventClass = `event-${event.eventType}`;
+                return `<div class="event-item ${eventClass}">
+                    ${event.title} (${event.eventType})
+                </div>`;
+            }).join('') || '<p>No events match current filters</p>';
+            
+            console.log(`Showing ${filtered.length} of ${allEvents.length} events`);
+        }
+
+        // Add test events
+        function addTestEvents() {
+            allEvents = [...testEvents];
+            filterAndDisplayEvents();
+            console.log('Test events added');
+        }
+
+        // Clear events
+        function clearEvents() {
+            allEvents = [];
+            filterAndDisplayEvents();
+            console.log('Events cleared');
+        }
+
+        // Test filtering
+        function testFiltering() {
+            console.log('Testing filtering system...');
+            console.log('Current filter state:', { showFun, showWork, showOther });
+            console.log('All events:', allEvents);
+            const filtered = getFilteredEvents(allEvents);
+            console.log('Filtered events:', filtered);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCheckboxes();
+            console.log('Filtering test page loaded');
+        });
+    </script>
+</body>
+</html> 

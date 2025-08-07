@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Event Creation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Calendar Event Creation Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Steps:</h2>
+        <ol>
+            <li>Open the calendar at <a href="http://localhost:5000/calendar/" target="_blank">http://localhost:5000/calendar/</a></li>
+            <li>Click on any time slot in the calendar</li>
+            <li>Fill in the event details in the modal</li>
+            <li>Click "Save"</li>
+            <li>Verify the event appears on the calendar</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behavior:</h2>
+        <ul>
+            <li>✅ Calendar should load without errors</li>
+            <li>✅ Clicking on time slots should open event modal</li>
+            <li>✅ Event modal should have all required fields</li>
+            <li>✅ Saving should create the event and close modal</li>
+            <li>✅ New event should appear on calendar</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Logs to Check:</h2>
+        <ul>
+            <li>✅ "Calendar element found"</li>
+            <li>✅ "Initializing FullCalendar..."</li>
+            <li>✅ "Calendar rendered successfully"</li>
+            <li>✅ "UI module loaded"</li>
+            <li>✅ "Event handlers loaded"</li>
+            <li>✅ "Event handlers initialized"</li>
+            <li>✅ "Date clicked: [timestamp]" when clicking</li>
+            <li>✅ "Opening event modal with defaults"</li>
+            <li>✅ "=== SAVING EVENT ===" when saving</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>If Issues Occur:</h2>
+        <ul>
+            <li>Check browser console for error messages</li>
+            <li>Verify the Flask server is running on port 5000</li>
+            <li>Check network tab for failed API requests</li>
+            <li>Ensure all JavaScript files are loading properly</li>
+        </ul>
+    </div>
+
+    <script>
+        // Simple test to verify the server is running
+        fetch('http://localhost:5000/calendar/health')
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Server is running:', data);
+                document.body.innerHTML += '<div class="test-section success"><h3>✅ Server Status: Running</h3></div>';
+            })
+            .catch(error => {
+                console.error('❌ Server not running:', error);
+                document.body.innerHTML += '<div class="test-section error"><h3>❌ Server Status: Not Running</h3><p>Please start the Flask server first.</p></div>';
+            });
+    </script>
+</body>
+</html> 

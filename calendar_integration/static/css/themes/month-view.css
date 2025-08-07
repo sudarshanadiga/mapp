@@ -1,0 +1,156 @@
+/* ===============================================
+   Month View Theme
+   =============================================== */
+
+/* Month view day cells */
+.fc-daygrid-day {
+  border: none !important;
+  background: var(--white);
+  transition: var(--transition-fast);
+}
+
+.fc-daygrid-day:hover {
+  background: var(--gray-50);
+}
+
+/* Day header styling */
+.fc-daygrid-day-header {
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  padding: var(--spacing-sm) var(--spacing-xs);
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: var(--font-size-sm);
+}
+
+/* Today styling in month view */
+.fc-day-today .fc-daygrid-day-header {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* Day number styling */
+.fc-daygrid-day-number {
+  color: var(--gray-800);
+  font-weight: 500;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+/* Event preview styling in month view */
+.fc-daygrid-event {
+  border-radius: var(--radius-sm);
+  border: none !important;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  padding: 2px 6px;
+  margin: 1px 2px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.fc-daygrid-event:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Event type colors in month view */
+.fc-daygrid-event.event-fun,
+.fc-daygrid-event[data-event-type="fun"] {
+  background: rgba(236, 72, 153, 0.1);
+  color: var(--event-fun);
+  border-left: 3px solid var(--event-fun);
+}
+
+.fc-daygrid-event.event-work,
+.fc-daygrid-event[data-event-type="work"] {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--event-work);
+  border-left: 3px solid var(--event-work);
+}
+
+.fc-daygrid-event.event-other,
+.fc-daygrid-event[data-event-type="other"] {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--event-other-border);
+  border-left: 3px solid var(--event-other-border);
+}
+
+/* More events indicator */
+.fc-daygrid-more-link {
+  color: var(--primary-color);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.fc-daygrid-more-link:hover {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+/* Month navigation */
+.fc-prev-button,
+.fc-next-button {
+  background: var(--white) !important;
+  border: 1px solid var(--gray-300) !important;
+  color: var(--gray-700) !important;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.fc-prev-button:hover,
+.fc-next-button:hover {
+  background: var(--gray-50) !important;
+  border-color: var(--gray-400) !important;
+  color: var(--gray-800) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Month view toolbar */
+.fc-dayGridMonth-view .fc-toolbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+/* Month view grid */
+.fc-dayGridMonth-view .fc-scrollgrid {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Week numbers (if enabled) */
+.fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+/* Responsive month view */
+@media (max-width: 768px) {
+  .fc-daygrid-day-header {
+    padding: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+  }
+  
+  .fc-daygrid-event {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  .fc-daygrid-day-number {
+    font-size: var(--font-size-sm);
+  }
+} 

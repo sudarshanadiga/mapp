@@ -1,0 +1,59 @@
+/* ===============================================
+   Event Type Filter Box
+   =============================================== */
+   #calendar-filters {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    background: var(--white) !important;
+    border: 1px solid var(--gray-200) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  
+  #calendar-filters::before {
+    content: "Event Type:";
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+    font-size: 14px;
+    display: block;
+  }
+  
+  #calendar-filters label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: var(--gray-700) !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+  }
+  
+  #calendar-filters label:hover {
+    color: var(--primary-color) !important;
+    background: var(--gray-50);
+    border-color: var(--gray-200);
+    transform: translateX(2px);
+  }
+  
+  #calendar-filters input[type="checkbox"] {
+    margin: 0 !important;
+    cursor: pointer;
+    transform: scale(1.1);
+    accent-color: var(--primary-color);
+  }
+  
+  #calendar-filters input[type="checkbox"]:checked + span {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
+  
+  #month-summary-bar {
+    color: var(--primary-color) !important;
+  }

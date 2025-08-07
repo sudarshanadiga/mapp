@@ -1,0 +1,220 @@
+/* ===============================================
+   Sidebar Styles
+   =============================================== */
+
+/* Sidebar Container */
+.sidebar {
+  width: 280px;
+  background: var(--gray-50);
+  border-right: 1px solid var(--gray-200);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+/* User Profile Section */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.user-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.user-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--gray-600);
+}
+
+/* Sidebar Filters Section */
+.sidebar-filters {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0; /* Allow shrinking */
+  overflow-y: auto; /* Allow scrolling if needed */
+}
+
+/* Weather Location Widget */
+#weather-location-container {
+  display: flex;
+  align-items: center;
+  gap: 4px !important;
+  padding: 8px 10px !important;
+  background: #fffbe6;
+  border: 1px solid #ffe58f;
+  border-radius: var(--radius-sm);
+  color: var(--gray-600);
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+#weather-location-container:hover {
+  border-color: #ffd93d;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.15);
+}
+
+#weather-location-input {
+  border: none !important;
+  background: transparent !important;
+  color: var(--primary-color) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: 120px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#weather-location-container button {
+  background: #ffe58f !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 2px 6px !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  color: #333 !important;
+  transition: var(--transition-fast) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Event Type Filters */
+#calendar-filters {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 16px !important;
+  background: var(--white) !important;
+  border: 1px solid var(--gray-200) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-sm) !important;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+#calendar-filters::before {
+  content: "Event Type:";
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: block;
+}
+
+#calendar-filters label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--gray-700) !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 4px 0;
+  border-radius: var(--radius-sm);
+}
+
+#calendar-filters label:hover {
+  color: var(--primary-color) !important;
+  background: var(--gray-50);
+  padding: 4px 8px;
+  margin: 0 -8px;
+}
+
+#calendar-filters input[type="checkbox"] {
+  margin: 0 !important;
+  cursor: pointer;
+  transform: scale(1.1);
+  accent-color: var(--primary-color);
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-200);
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Settings button styles removed */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    order: 2;
+    border-right: none;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 16px;
+    gap: 16px;
+    overflow: visible; /* Allow overflow on mobile */
+  }
+  
+  .user-profile {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+  
+  #calendar-filters {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 12px !important;
+  }
+  
+  #calendar-filters::before {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  #weather-location-container {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+  
+  #weather-location-input {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .sidebar-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+} 

@@ -1,0 +1,67 @@
+/* ===============================================
+   Calendar Toolbar & Controls
+   =============================================== */
+/* Calendar buttons - REDUCED BY 30% */
+.fc-button {
+    background: var(--white) !important;
+    border: 1px solid var(--gray-300) !important;
+    color: var(--gray-700) !important;
+    font-weight: 500;
+    padding: 6px 11px; /* Reduced from 8px 16px by 30% */
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fast);
+    box-shadow: none;
+  }
+  
+  .fc-button:hover {
+    background: var(--gray-50) !important;
+    border-color: var(--gray-400) !important;
+    color: var(--gray-800) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .fc-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  .fc-button-active {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--white) !important;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* Toolbar container - REDUCED BY 30% MORE (60% total reduction) */
+  .fc-toolbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 5.6px 9.8px; /* Reduced from 8px 14px by another 30% */
+  }
+  
+  /* Toolbar title - REDUCED BY 30% */
+  .fc-toolbar-title {
+    color: var(--gray-800);
+    font-weight: 600;
+    font-size: 0.74rem; /* Further reduced by 30% */
+  }
+  
+  /* Toolbar chunks - REDUCED BY 30% */
+  .fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+    gap: 4px; /* Further reduced by 30% */
+  }
+  
+  .fc-toolbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 5.6px 9.8px; /* Reduced from 8px 14px by another 30% */
+  }
+  }
+  
+  .fc-today-button:hover {
+    background: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+  }/* Calendar Header and Controls */ 

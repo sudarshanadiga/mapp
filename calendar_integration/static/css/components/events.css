@@ -1,0 +1,174 @@
+/* ===============================================
+   Event Styles
+   =============================================== */
+.fc-event {
+    border-radius: 4px;
+    border: none !important;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-normal);
+    cursor: pointer;
+    animation: none !important;
+    margin: 1px 2px;
+    padding: 2px 4px !important;  /* Add padding */
+    overflow: hidden;  /* Prevent text overflow */
+}
+
+/* Ensure event text is visible */
+.fc-event-title {
+    color: inherit !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+}
+
+.fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.event-content {
+    padding: 4px 8px;
+}
+
+.event-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: var(--gray-800);
+}
+
+.event-location {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    color: var(--gray-600);
+}
+
+/* Event type specific styles with proper text colors */
+.fc-event.event-fun,
+.fc-event[data-event-type="fun"] {
+    background-color: #e91e63 !important;
+    border-left: 4px solid #c2185b !important;
+    color: #ffffff !important;
+}
+
+.fc-event.event-work,
+.fc-event[data-event-type="work"] {
+    background-color: #e3f2fd !important;
+    border-left: 4px solid #2196f3 !important;
+    color: #1565c0 !important;
+}
+
+.fc-event.event-other,
+.fc-event[data-event-type="other"] {
+    background-color: #e8f5e9 !important;
+    border-left: 4px solid #4caf50 !important;
+    color: #2e7d32 !important;
+}
+
+/* Override any conflicting white background */
+.fc-event.event-fun .fc-event-main,
+.fc-event.event-work .fc-event-main,
+.fc-event.event-other .fc-event-main {
+    color: inherit !important;
+}
+
+/* Ensure time text is also visible */
+.fc-event-time {
+    color: inherit !important;
+    opacity: 0.8;
+}
+
+/* Highlight animation for events */
+.highlight-event,
+.fc-event.highlight-event {
+    animation: pulse 1s ease-in-out 3 !important;
+    animation-fill-mode: forwards;
+}
+
+/* ===============================================
+     List View Event Styles
+     =============================================== */
+  /* List view event colors */
+  .fc-list-event.event-fun .fc-list-event-dot {
+    background-color: var(--event-fun);
+    border-color: var(--event-fun);
+  }
+
+  .fc-list-event.event-other .fc-list-event-dot {
+    background-color: var(--event-other-border);
+    border-color: var(--event-other-border);
+  }
+
+  .fc-list-event .fc-list-event-title {
+    color: inherit;
+  }
+
+  .fc-list-event.event-fun {
+    background-color: rgba(233, 30, 99, 0.05);
+    border-left: 4px solid var(--event-fun);
+  }
+
+  .fc-list-event.event-other {
+    background-color: rgba(76, 175, 80, 0.05);
+    border-left: 4px solid var(--event-other-border);
+  }
+
+  /* Work events (default) styling for list view */
+  .fc-list-event:not(.event-fun):not(.event-other) .fc-list-event-dot {
+    background-color: var(--event-work);
+    border-color: var(--event-work);
+  }
+
+  .fc-list-event:not(.event-fun):not(.event-other) {
+    background-color: rgba(33, 150, 243, 0.05);
+    border-left: 4px solid var(--event-work);
+  }
+
+  /* Weather event styles - keep special styling but soften colors */
+  .fc-event[data-type="weather-warning"] {
+    background-color: rgba(255, 179, 179, 0.1) !important;
+    border-left-color: #ff8080 !important;
+    color: #d00000 !important;
+    opacity: 0.9;
+  }
+
+  .fc-event[data-type="weather-warning"]:hover {
+    opacity: 1;
+    background-color: rgba(255, 179, 179, 0.15) !important;
+  }
+
+  /* Weather event styles for all-day section */
+  .fc-event-weather,
+  .fc-event.fc-event-weather {
+    background-color: rgba(255, 179, 179, 0.1) !important;
+    border: 1px solid rgba(255, 128, 128, 0.3) !important;
+    color: #d00000 !important;
+    font-size: 12px !important;
+    padding: 2px 4px !important;
+    cursor: default !important;
+    opacity: 0.9;
+  }
+
+  .fc-event-weather:hover {
+    opacity: 1;
+    transform: none !important;
+    background-color: rgba(255, 179, 179, 0.15) !important;
+  }
+
+  /* Ensure weather events stay in all-day section */
+  .fc-timegrid-all-day .fc-event-weather {
+    margin: 1px 2px;
+  }
+
+  /* Hide weather events in scrollable time area */
+  .fc-timegrid-slots .fc-event-weather {
+    display: none !important;
+  }
+
+  /* Month view - show as background */
+  .fc-daygrid .fc-event-weather {
+    opacity: 0.3;
+    z-index: 1;
+  }
+
+/* Event Chip Styles */ 

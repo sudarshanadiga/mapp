@@ -1,0 +1,6 @@
+packages:
+  - "pitext_codegen/**"
+  - "pitext_desktop/**"
+  - "pitext_mobile/**"
+  - "pitext_travel/**"
+  - "calendar_integration/**" 

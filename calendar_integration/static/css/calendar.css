@@ -1,0 +1,75 @@
+/* ===============================================
+   PiText Calendar - Main CSS Import File
+   =============================================== */
+
+/* Base */
+@import './base/variables.css';
+@import './base/reset.css';
+@import './base/layout.css';
+
+/* Components */
+@import './components/sidebar.css';
+@import './components/calendar-grid.css';
+@import './components/calendar-toolbar.css';
+@import './components/events.css';
+@import './components/modal.css';
+@import './components/forms.css';
+@import './components/buttons.css';
+@import './components/filters.css';
+@import './components/sleep-toggles.css';
+@import './components/notifications.css';
+
+/* Utilities */
+@import './utilities/animations.css';
+@import './utilities/helpers.css';
+@import './utilities/responsive.css';
+
+/* Themes */
+@import './themes/month-view.css';
+
+/* ─── Layout: make calendar flush with top & bottom ───────────────────── */
+html, body {
+  height: 100%;         /* <-- give us a 100 vh canvas              */
+  margin: 0;            /* <-- kill browser's default 8 px margin   */
+  padding: 0;
+  overflow: hidden;     /* Prevent body overflow */
+}
+
+body {
+  /* Light background for modern design */
+  background: var(--gray-50);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--gray-800);
+  position: relative;   /* For proper positioning */
+}
+
+/* FullCalendar root gets the remaining height */
+#calendar,               /* if you gave the div an id="calendar"  */
+.fc-view-harness {       /* modern FC v6 wrapper                   */
+  flex: 1 1 auto;
+  height: 100% !important;
+  overflow: hidden;      /* Prevent overflow */
+}
+
+/* --- Flush white panel with top edge of the viewport --- */
+html, body {
+    margin: 0 !important;
+    padding: 0;
+    height: 100%;
+    background: var(--gray-50);
+    overflow: hidden;    /* Prevent any overflow */
+}
+
+/* Dark theme toggle support */
+.calendar-dark-theme {
+  /* Dark theme styles are imported from calendar-dark-theme.css */
+  /* This class can be toggled to enable dark mode */
+}
+
+/* Ensure proper font rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
