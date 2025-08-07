@@ -1,33 +1,52 @@
-# api/config.py
-"""Configuration management for the travel planner API."""
+"""Configuration module for travel API."""
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from typing import Dict, Any
 
 
-def get_openai_api_key():
-    """Get OpenAI API key from environment."""
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY not set")
-    return api_key
-
-
-def get_google_maps_config():
-    """Get Google Maps configuration."""
+def get_google_maps_config() -> Dict[str, Any]:
+    """
+    Get Google Maps configuration from environment variables.
+    
+    Returns:
+        Dict containing Google Maps API configuration
+    """
     return {
         "api_key": os.getenv("GOOGLE_MAPS_API_KEY", ""),
-        "client_id": os.getenv("maps_client_id", ""),
-        "client_secret": os.getenv("maps_client_secret", "")
+        "client_id": os.getenv("GOOGLE_MAPS_CLIENT_ID", ""),
+        "client_secret": os.getenv("GOOGLE_MAPS_CLIENT_SECRET", "")
     }
 
 
-def get_port():
-    """Get port configuration."""
-    return int(os.getenv("PORT", 3000))
+def get_openai_config() -> Dict[str, Any]:
+    """
+    Get OpenAI configuration from environment variables.
+    
+    Returns:
+        Dict containing OpenAI API configuration
+    """
+    return {
+        "api_key": os.getenv("OPENAI_API_KEY", ""),
+        "model": os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+        "temperature": float(os.getenv("OPENAI_TEMPERATURE", "0.7")),
+        "max_tokens": int(os.getenv("OPENAI_MAX_TOKENS", "2000"))
+    }
 
 
-def get_render_mode():
-    """Get render mode configuration."""
-    return os.getenv("RENDER_MODE", "html")
+def validate_config() -> Dict[str, bool]:
+    """
+    Validate that required configuration is present.
+    
+    Returns:
+        Dict indicating which configurations are valid
+    """
+    return {
+        "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+        "google_maps_configured": bool(
+            os.getenv("GOOGLE_MAPS_API_KEY") or 
+            os.getenv("GOOGLE_MAPS_CLIENT_ID")
+        ),
+        "all_configured": bool(
+            os.getenv("OPENAI_API_KEY") and 
+            (os.getenv("GOOGLE_MAPS_API_KEY") or os.getenv("GOOGLE_MAPS_CLIENT_ID"))
+        )
+    }
