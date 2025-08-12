@@ -46,7 +46,7 @@
         body {
             font-family: var(--font-primary);
             background-color: var(--bg-dark);
-            color: var(--text-white);
+            color: #ffffff;
             line-height: 1.6;
             margin: 0;
             padding: 0;
@@ -219,7 +219,7 @@
 
         /* Mission Section - Mobile */
         .mission {
-            padding: 140px 20px 60px 20px;
+            padding: 80px 20px 60px 20px;
             background: rgba(255, 255, 255, 0.02);
         }
 
@@ -297,6 +297,25 @@
             margin-bottom: 32px;
             line-height: 1.8;
             font-family: var(--font-primary);
+        }
+
+        /* Streets Section - Mobile */
+        #streets {
+            padding: 0 !important;
+            padding-top: 60px !important;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        #streets-iframe {
+            position: absolute;
+            top: 60px; /* Account for mobile header */
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            border: none;
+            display: block;
         }
 
         /* Strassens Search Section - Mobile */
@@ -385,13 +404,13 @@
             width: 100%;
             padding: 14px 16px;
             font-size: 16px;
+            font-family: inherit;
             background: var(--bg-translucent);
             border: 1px solid var(--border-light);
             border-radius: 8px;
             color: var(--text-white);
             transition: all 0.2s ease;
             -webkit-appearance: none;
-            font-family: var(--font-primary);
         }
 
         #query:focus {
@@ -414,10 +433,10 @@
             border: none;
             border-radius: 8px;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
             transition: all 0.2s ease;
             -webkit-appearance: none;
-            font-family: var(--font-primary);
         }
 
         .primary-btn:hover,
@@ -521,8 +540,8 @@
             border-radius: 6px;
             color: var(--text-white);
             font-size: 14px;
+            font-family: inherit;
             -webkit-appearance: none;
-            font-family: var(--font-primary);
         }
 
         #deepDiveQuery:focus {
@@ -538,10 +557,10 @@
             color: var(--text-white);
             border-radius: 6px;
             font-size: 14px;
+            font-family: inherit;
             cursor: pointer;
             transition: all 0.2s ease;
             -webkit-appearance: none;
-            font-family: var(--font-primary);
         }
 
         .secondary-btn:hover,
@@ -722,9 +741,9 @@
             color: var(--text-light);
             border-radius: 6px;
             font-size: 12px;
+            font-family: inherit;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-family: var(--font-primary);
         }
 
         .diagram-btn:hover,
@@ -807,8 +826,7 @@
         <ul class="mobile-nav-links">
             <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
             <li><a href="#mission" class="nav-link" data-section="mission">Mission</a></li>
-            <!-- <li><a href="#team" class="nav-link" data-section="team">Team</a></li>
-            <li><a href="#scouts" class="nav-link" data-section="scouts">Scouts</a></li> !-->
+            <li><a href="#streets" class="nav-link" data-section="streets">Streets</a></li>
             <li><a href="#strassens" class="nav-link" data-section="strassens">Strassens Search</a></li>
         </ul>
         <a href="#waitlist" class="mobile-waitlist-btn">Join Waitlist</a>
@@ -830,6 +848,16 @@
         <p>Every day, we face a paradox: infinite choices, finite time. The modern world presents us with an exponential explosion of options, leaving us exhausted by decision fatigue and haunted by paths not taken.</p>
         <p>We're building the intelligence layer that transforms life's complexity into clarity. Our optimization platform doesn't just crunch numbers—it understands trade-offs, models outcomes, and illuminates the paths that align with what matters most to you.</p>
         <p>Our mission is to democratize decision intelligence, giving everyone access to the tools that turn overwhelming choices into confident actions, creating space for what truly matters in life.</p>
+    </section>
+
+    <!-- Streets Section -->
+    <section id="streets" class="content-section">
+        <iframe 
+            id="streets-iframe"
+            src="/travel/" 
+            style="width: 100%; height: 100%; border: none; display: block;"
+            title="PiText Travel - Streets">
+        </iframe>
     </section>
 
     <!-- Team Section -->
@@ -1138,6 +1166,14 @@
                 // Initialize Mermaid when showing Strassens section
                 if (sectionId === 'strassens') {
                     initializeMermaid();
+                }
+                
+                // Handle Streets iframe loading
+                if (sectionId === 'streets') {
+                    const iframe = document.getElementById('streets-iframe');
+                    if (iframe && !iframe.src) {
+                        iframe.src = '/travel/';
+                    }
                 }
             }
             

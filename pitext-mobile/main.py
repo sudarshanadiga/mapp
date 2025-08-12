@@ -14,6 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from asgiref.wsgi import WsgiToAsgi
+
+# Import travel app
+sys.path.append(str(Path(__file__).parent.parent))
+from pitext_travel.main import app as travel_flask_app
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -419,6 +424,10 @@ def create_app() -> FastAPI:
 
     # API routes
     app.include_router(router)
+
+    # Mount the travel Flask app as a sub-application
+    travel_asgi_app = WsgiToAsgi(travel_flask_app)
+    app.mount("/travel", travel_asgi_app, name="travel")
 
     # Root redirect
     @app.get("/", include_in_schema=False)
