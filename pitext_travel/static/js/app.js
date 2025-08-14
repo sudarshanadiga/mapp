@@ -77,12 +77,12 @@ async function processItinerary(city, days) {
     const { fetchItinerary } = window.TravelAPI;
     
     if (!isMapLoaded()) {
-        showError("Google Maps is still loading. Please wait a moment and try again.");
+        showError("Calculating routes…");
         return;
     }
     
     // Show loading
-    showLoading("Generating your Holi :) Day plans!");
+    showLoading("");
     
     try {
         // Fetch itinerary

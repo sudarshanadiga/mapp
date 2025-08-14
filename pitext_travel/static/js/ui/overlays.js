@@ -35,7 +35,7 @@ function showLoading(message) {
     
     overlay.innerHTML = `
         <p style="margin: 0 0 0.5rem;">🔄 ${message}</p>
-        <p><small>This may take a few moments…</small></p>
+        <p><small>You do you for a minute.</small></p>
     `;
     overlay.classList.add("visible");
 }

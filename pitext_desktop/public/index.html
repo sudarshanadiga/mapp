@@ -894,6 +894,7 @@
                 <li><a href="#mission" class="nav-link" data-section="mission">Mission</a></li>
                 <li><a href="#streets" class="nav-link" data-section="streets">Streets</a></li>
                 <li><a href="#strassens" class="nav-link" data-section="strassens">Search</a></li>
+                <li><a href="#review" class="nav-link" data-section="review">Review</a></li>
             </ul>
             
             <a href="#waitlist" class="navbar-cta">Join Waitlist →</a>
@@ -1027,6 +1028,60 @@
                     <div id="deepDiveResponse" class="deep-dive-response"></div>
                 </div>
             </main>
+        </div>
+    </section>
+
+    <!-- Review Section -->
+    <section id="review" class="content-section">
+        <div class="container">
+            <div class="review-content">
+                <h2>Business Reviews</h2>
+                <p>Search for businesses and read customer reviews powered by Outscraper</p>
+                
+                <!-- Search Section -->
+                <div class="review-search-section">
+                    <form id="review-search-form" class="search-form">
+                        <input 
+                            type="text" 
+                            id="review-query" 
+                            placeholder="Search for businesses (e.g., restaurants, coffee shops)"
+                            required
+                        />
+                        <input 
+                            type="text" 
+                            id="review-location" 
+                            placeholder="Location (e.g., New York, NY)"
+                        />
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+                
+                <!-- Search Results -->
+                <div id="search-results" class="search-results-section"></div>
+                
+                <!-- Business Details -->
+                <div id="business-details" class="business-details-section">
+                    <div class="business-details-header">
+                        <h2 id="selected-business-name"></h2>
+                        <div id="selected-business-rating" class="business-rating"></div>
+                    </div>
+                    
+                    <div class="review-controls">
+                        <div class="sort-control">
+                            <label for="review-sort">Sort by:</label>
+                            <select id="review-sort">
+                                <option value="most_relevant">Most Relevant</option>
+                                <option value="newest">Newest</option>
+                                <option value="highest_rating">Highest Rating</option>
+                                <option value="lowest_rating">Lowest Rating</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Reviews Container -->
+                    <div id="reviews-container" class="reviews-container"></div>
+                </div>
+            </div>
         </div>
     </section>
 
