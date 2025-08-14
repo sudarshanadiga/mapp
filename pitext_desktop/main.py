@@ -25,11 +25,14 @@ from api.routes import router, setup_static_routes
 from api.middleware import setup_middleware
 from core.config import get_config
 
+# Import Outscraper routes
+from outscraper.routes import router as outscraper_router
+
 
 def setup_logging():
     """Configure application logging."""
     logging.basicConfig(
-        level=logging.INFO,  # Ensure this is INFO, not DEBUG
+        level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(sys.stdout)]
     )
@@ -45,18 +48,28 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="PiText",
-        description="Visual code generation, Mermaid diagram creator, and travel planner",
+        description="Visual code generation, Mermaid diagram creator, travel planner, and business review finder",
         version="0.1.0",
     )
 
     # Middleware (CORS, Logging, Security, etc.)
     setup_middleware(app)
 
+    # Mount static files for outscraper
+    app.mount(
+        "/desktop/outscraper",
+        StaticFiles(directory=str(Path(__file__).parent / "outscraper")),
+        name="outscraper_static"
+    )
+
     # Mount static files
     setup_static_routes(app)
 
     # API routes for desktop
     app.include_router(router)
+    
+    # Include Outscraper routes
+    app.include_router(outscraper_router)
 
     # Mount the travel Flask app as a sub-application
     travel_asgi_app = WsgiToAsgi(travel_flask_app)
