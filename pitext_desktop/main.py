@@ -17,7 +17,7 @@ from asgiref.wsgi import WsgiToAsgi
 # Import travel app
 sys.path.append(str(Path(__file__).parent.parent))
 from pitext_travel.main import app as travel_flask_app
-from outscraper.routes import router as outscraper_router
+from pitext_desktop.outscraper.routes import router as outscraper_router  # Fixed import path
 
 
 # Ensure project root is on sys.path
@@ -26,9 +26,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 from api.routes import router, setup_static_routes
 from api.middleware import setup_middleware
 from core.config import get_config
-
-# Import Outscraper routes
-from outscraper.routes import router as outscraper_router
 
 
 def setup_logging():
