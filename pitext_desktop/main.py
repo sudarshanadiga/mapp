@@ -17,7 +17,7 @@ from asgiref.wsgi import WsgiToAsgi
 # Import travel app
 sys.path.append(str(Path(__file__).parent.parent))
 from pitext_travel.main import app as travel_flask_app
-from pitext_desktop.outscraper.routes import router as outscraper_router  # Fixed import path
+from outscraper.routes import router as outscraper_router
 
 
 # Ensure project root is on sys.path
