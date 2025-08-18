@@ -55,11 +55,15 @@ def create_app() -> FastAPI:
     setup_middleware(app)
 
     # Mount static files for outscraper
-    app.mount(
-        "/desktop/outscraper",
-        StaticFiles(directory=str(Path(__file__).parent / "outscraper")),
-        name="outscraper_static"
-    )
+    outscraper_path = Path(__file__).parent.parent / "outscraper"
+    if outscraper_path.exists():
+        app.mount(
+            "/desktop/outscraper",
+            StaticFiles(directory=str(outscraper_path)),
+            name="outscraper_static"
+        )
+    else:
+        logging.warning(f"Outscraper directory not found at {outscraper_path}")
 
     # Mount static files
     setup_static_routes(app)

@@ -17,8 +17,10 @@ else:
 
 try:
     from outscraper import ApiClient
+    OUTSCRAPER_AVAILABLE = True
 except ImportError:
     ApiClient = None
+    OUTSCRAPER_AVAILABLE = False
     logging.warning("Outscraper package not installed. Install with: pip install outscraper")
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ class OutscraperService:
     
     def __init__(self):
         self.api_key = os.getenv('OUTSCRAPER_API_KEY')
-        self.is_configured = bool(self.api_key and ApiClient)
+        self.is_configured = bool(self.api_key and OUTSCRAPER_AVAILABLE)
         
         if self.is_configured:
             try:
@@ -42,7 +44,7 @@ class OutscraperService:
         else:
             if not self.api_key:
                 logger.warning("OUTSCRAPER_API_KEY not found in environment variables")
-            if not ApiClient:
+            if not OUTSCRAPER_AVAILABLE:
                 logger.warning("Outscraper package not installed")
             self.client = None
     
@@ -52,7 +54,7 @@ class OutscraperService:
             "available": self.is_configured,
             "has_api_key": bool(self.api_key),
             "client_initialized": self.client is not None,
-            "package_installed": ApiClient is not None
+            "package_installed": OUTSCRAPER_AVAILABLE
         }
     
     async def search_businesses(
