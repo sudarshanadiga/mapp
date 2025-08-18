@@ -19,7 +19,7 @@ class ReviewsRequest(BaseModel):
     reviews_limit: int = Field(20, ge=1, le=100, description="Maximum number of reviews")
     sort: str = Field(
         "most_relevant",
-        regex="^(most_relevant|newest|highest_rating|lowest_rating)$",
+        pattern="^(most_relevant|newest|highest_rating|lowest_rating)$",
         description="Sort order for reviews"
     )
 
